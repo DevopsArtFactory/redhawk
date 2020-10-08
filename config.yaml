@@ -1,0 +1,22 @@
+# Checklist.yaml
+#Basic Configurations
+provider: client
+accounts:
+  # Account : name of account alias
+  # Role Arn : Assume role that is used for original account to assume to access the cross account
+  - name: prerpod
+    role_arn: arn:client:iam::11111...
+
+# Regions to scan
+regions:
+  - ap-northeast-2
+  - ap-southeast-1
+  - us-east-1
+  - us-west-2
+
+resources:
+  - name: ec2
+  - name: security_group
+  - name: rds
+  - name: route53
+  - name: iam
