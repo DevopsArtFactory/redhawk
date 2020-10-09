@@ -26,8 +26,8 @@ func NewRootCommand(out, stderr io.Writer) *cobra.Command {
 	cobra.OnInitialize(initConfig)
 	rootCmd := &cobra.Command{
 		Use:           "redhawk",
-		Short:         "Opensource client resource audit and management tool",
-		Long:          "Opensource client resource audit and management tool",
+		Short:         "Opensource cloud resources audit and management tool",
+		Long:          "Opensource cloud resources audit and management tool",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -51,7 +51,7 @@ func NewRootCommand(out, stderr io.Writer) *cobra.Command {
 	//Group by commands
 	groups := templates.CommandGroups{
 		{
-			Message: "managing configuration of redhawk",
+			Message: "checking all resources in cloud provider",
 			Commands: []*cobra.Command{
 				NewCmdScanResources(),
 			},

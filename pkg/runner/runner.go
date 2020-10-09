@@ -1,30 +1,33 @@
 package runner
 
 import (
+	"html/template"
+	"io"
+	"text/tabwriter"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
 	"github.com/DevopsArtFactory/redhawk/pkg/builder"
 	"github.com/DevopsArtFactory/redhawk/pkg/client"
 	"github.com/DevopsArtFactory/redhawk/pkg/color"
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"github.com/DevopsArtFactory/redhawk/pkg/provider"
+	"github.com/DevopsArtFactory/redhawk/pkg/schema"
 	"github.com/DevopsArtFactory/redhawk/pkg/templates"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
-	"html/template"
-	"io"
-	"text/tabwriter"
 )
 
 type Runner struct {
-	AWSClient client.Client
-	Builder   *builder.Builder
+	AWSClient  client.Client
+	Builder    *builder.Builder
 	TotalCount int
 }
 
 type Record struct {
-	Error error
+	Error    error
 	Resource string
-	Region string
-	Data []map[string]interface{}
+	Region   string
+	Data     *schema.AWSResources
 }
 
 func New() *Runner {
@@ -47,14 +50,17 @@ func (r Runner) ScanResources(out io.Writer) error {
 	// Region based
 	for _, region := range r.Builder.Config.Regions {
 		// Create new provider
-		prov := provider.CreateProvider(r.Builder.Config.Provider)
+		prov, err := provider.CreateProvider(r.Builder.Config.Provider)
+		if err != nil {
+			return err
+		}
 
 		// Resources based
 		for _, t := range r.Builder.Config.Resources {
 			go func(name, region string) {
 				re := Record{
 					Error:    nil,
-					Resource: t.Name,
+					Resource: name,
 					Region:   region,
 				}
 				c, err := prov.CreateClient(region, name)
@@ -71,17 +77,12 @@ func (r Runner) ScanResources(out io.Writer) error {
 		}
 	}
 
-	result := map[string]map[string][]map[string]interface{}{}
+	result := schema.AWSResources{}
 	for i := 0; i < r.TotalCount; i++ {
-		record := <- ch
-		if _, ok := result[record.Resource]; !ok {
-			result[record.Resource] = map[string][]map[string]interface{}{}
-		}
+		record := <-ch
 
-		if _, ok := result[record.Resource][record.Region]; !ok {
-			result[record.Resource][record.Region] = record.Data
-		} else {
-			result[record.Resource][record.Region] = append(result[record.Resource][record.Region], record.Data...)
+		if record.Data != nil {
+			setReturnData(&result, record.Data, record.Resource)
 		}
 
 		if record.Error != nil {
@@ -89,32 +90,41 @@ func (r Runner) ScanResources(out io.Writer) error {
 		}
 	}
 
-	if err := PrintScanResult(out, result); err != nil {
+	if err := PrintScanResult(out, r.Builder.Config.Provider, result); err != nil {
 		return err
 	}
-
-	//for _, err := range errors {
-	//	fmt.Println(err.Error())
-	//}
 	return nil
 }
 
+// setReturnData sets return value to result
+func setReturnData(result, data *schema.AWSResources, resource string) {
+	switch resource {
+	case "ec2":
+		result.EC2 = append(result.EC2, data.EC2...)
+	}
+}
+
 // PrintScanResult prints scan result
-func PrintScanResult(out io.Writer, result map[string]map[string][]map[string]interface{}) error {
+func PrintScanResult(out io.Writer, provider string, result schema.AWSResources) error {
+	var scanData = struct {
+		Summary  schema.AWSResources
+		Provider string
+	}{
+		Summary:  result,
+		Provider: provider,
+	}
+
 	funcMap := template.FuncMap{
 		"decorate": color.DecorateAttr,
 	}
 
-	for resource, ret := range result {
-		w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)
-		t := template.Must(template.New(templates.Templates[resource]["title"]).Funcs(funcMap).Parse(templates.Templates[resource]["template"]))
+	// Template for scan result
+	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)
+	t := template.Must(template.New("Result").Funcs(funcMap).Parse(templates.Templates[provider]))
 
-		err := t.Execute(w, data)
-		if err != nil {
-			return err
-		}
-		w.Flush()
+	err := t.Execute(w, scanData)
+	if err != nil {
+		return err
 	}
-
-	return nil
+	return w.Flush()
 }

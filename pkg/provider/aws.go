@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"fmt"
 	"github.com/DevopsArtFactory/redhawk/pkg/client"
 )
 
@@ -19,12 +18,7 @@ func NewAWSProvider() Provider {
 
 // CreateClient creates a new resource-specific client
 func (a AWSProvider) CreateClient(region string, resource string) (client.Client, error) {
-	f, ok := clientMapperFunc[a.Provider]
-	if !ok {
-		return nil, fmt.Errorf("provider is not supported: %s", a.Provider)
-	}
-
-	return f(a.Provider, resource, region)
+	return client.CreateResourceClient(a.Provider, resource, region)
 }
 
 // GetProvider returns provider

@@ -1,47 +1,18 @@
 package templates
 
 var (
-	Templates = map[string]map[string]string {
-		"ec2": {
-			"title": "EC2 instance status",
-			"template": EC2Template,
-		},
+	Templates = map[string]string{
+		"aws": AWSTemplate,
 	}
 )
 
-// EC2Template
-const EC2Template = `{{decorate "ec2" ""}}{{decorate "underline bold" "EC2"}}
-{{- if eq (len .Summary) 0 }}
- No rule exists
-{{- else }}
-ID	TYPE	ACTION	PRIORITY	DATESET COUNT
-{{- range $rule := .Summary.Rules }}
-{{ $rule.RuleID }}	{{ $rule.Type }}	{{ $rule.ActionType }}	{{ $rule.Priority }}	{{ len $rule.IPDataSet }}
-{{- end }}
-{{- end }}
-
-{{decorate "IP Set" ""}}{{decorate "underline bold" "IP Set Details"}}
-{{- range $rule := .Summary.Rules }}
-{{- if gt (len $rule.IPDataSet) 0 }}
-{{- range $ipset := $rule.IPDataSet }}
-{{- if eq (len $ipset.IPList) 0 }}
-No IP is registered
-{{- else }}
-ID	Count
-{{ $ipset.ID }}	{{ len $ipset.IPList }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-`
-
-const IPSearchResultTemplate = `{{decorate "result" ""}}{{decorate "underline bold" "Result"}}
-{{- if eq (len .Summary) 0 }}
- No result exists
-{{- else }}
-IP	IPSetID	Result
-{{- range $result := .Summary }}
-{{ $result.IP }}	{{ $result.IPSetID }}	{{ $result.Result }}
+// AWSTemplate is a template for aws provider
+const AWSTemplate = `PROVIDER: {{ .Provider }}
+============================================
+{{- if gt (len .Summary.EC2) 0 }}
+SERVICE	NAME	ID	STATUS	TYPE	AZ	PUBLIC IP	IPv6	PRIVATE IP	SG NAME	SG ID	KEY	OWNER	IMAGE	LAUNCHED
+{{- range $ec2 := .Summary.EC2 }}
+EC2	{{ $ec2.Name }}	{{ $ec2.InstanceID }}	{{ $ec2.InstanceStatus }}	{{ $ec2.InstanceType }}	{{ $ec2.AvailabilityZone }}	{{ $ec2.PublicIP }}	{{ $ec2.IPv6s }}	{{ $ec2.PrivateIPs }}	{{ $ec2.SecurityGroupNames }}	{{ $ec2.SecurityGroupIDs }}	{{ $ec2.KeyName }}	{{ $ec2.OwnerID }}	{{ $ec2.ImageID }}	{{ $ec2.LaunchTime }}
 {{- end }}
 {{- end }}
 `

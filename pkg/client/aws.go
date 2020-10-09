@@ -2,18 +2,21 @@ package client
 
 import (
 	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws/credentials"
+
+	"github.com/DevopsArtFactory/redhawk/pkg/schema"
 )
 
 type Client interface {
 	GetResourceName() string
-	Scan() ([]map[string]interface{}, error)
+	Scan() (*schema.AWSResources, error)
 }
 
 type Helper struct {
 	Provider string
 	Resource string
-	Region string
+	Region   string
 
 	// AWS Helper config
 	Credentials *credentials.Credentials
@@ -22,7 +25,7 @@ type Helper struct {
 // ChooseResourceClient selects resource client from the list
 func ChooseResourceClient(resource string, h Helper) (Client, error) {
 	f, ok := clientMapper[resource]
-	if ! ok {
+	if !ok {
 		return nil, fmt.Errorf("client does not support: %s", resource)
 	}
 
@@ -38,9 +41,8 @@ func ChooseResourceClient(resource string, h Helper) (Client, error) {
 func CreateResourceClient(provider, resource, region string) (Client, error) {
 	h := Helper{
 		Provider: provider,
-		Region: region,
+		Region:   region,
 	}
 
 	return ChooseResourceClient(resource, h)
 }
-

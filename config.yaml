@@ -1,6 +1,6 @@
 # Checklist.yaml
 #Basic Configurations
-provider: client
+provider: aws
 accounts:
   # Account : name of account alias
   # Role Arn : Assume role that is used for original account to assume to access the cross account

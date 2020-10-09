@@ -1,17 +1,18 @@
 package client
 
 import (
-	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"strings"
+
+	"github.com/DevopsArtFactory/redhawk/pkg/constants"
+	"github.com/DevopsArtFactory/redhawk/pkg/schema"
 )
 
 type EC2Client struct {
 	Resource string
-	Client *ec2.EC2
+	Client   *ec2.EC2
 }
 
 func (e EC2Client) GetResourceName() string {
@@ -19,42 +20,39 @@ func (e EC2Client) GetResourceName() string {
 }
 
 // Scan scans all data
-func (e EC2Client) Scan() ([]map[string]interface{}, error) {
-	var ret []map[string]interface{}
+func (e EC2Client) Scan() (*schema.AWSResources, error) {
+	var result []schema.EC2Resource
+
 	reservations, err := e.GetEC2Instances()
 	if err != nil {
 		return nil, err
 	}
 	for _, reservation := range reservations {
-		tmp := map[string]interface{}{}
+		tmp := schema.EC2Resource{}
 		for _, instance := range reservation.Instances {
-			tmp["instance_id"] = *instance.InstanceId
-			tmp["instance_status"] = *instance.State.Name
-			tmp["instance_type"] = *instance.InstanceType
-			tmp["availability_zone"] = *instance.Placement.AvailabilityZone
-			tmp["launch_time"] = *instance.LaunchTime
-			tmp["image_id"] = *instance.ImageId
-			tmp["vpc_id"] = *instance.VpcId
+			tmp.InstanceID = instance.InstanceId
+			tmp.InstanceStatus = instance.State.Name
+			tmp.InstanceType = instance.InstanceType
+			tmp.AvailabilityZone = instance.Placement.AvailabilityZone
+			tmp.LaunchTime = instance.LaunchTime
+			tmp.ImageID = instance.ImageId
+			tmp.VpcID = instance.VpcId
 
 			if instance.PublicIpAddress != nil {
-				tmp["public_ip"] = *instance.PublicIpAddress
-			}
-
-			if instance.PrivateIpAddress != nil {
-				tmp["private_ip"] = *instance.PrivateIpAddress
+				tmp.PublicIP = instance.PublicIpAddress
 			}
 
 			if instance.KeyName != nil {
-				tmp["key_name"] = *instance.KeyName
+				tmp.KeyName = instance.KeyName
 			}
 
 			if instance.IamInstanceProfile != nil {
-				tmp["iam_instance_profile"] = *instance.IamInstanceProfile
+				tmp.IAMInstanceProfile = instance.IamInstanceProfile.Arn
 			}
 
 			for _, tag := range instance.Tags {
 				if *tag.Key == "Name" {
-					tmp["name"] = *tag.Value
+					tmp.Name = tag.Value
 					break
 				}
 			}
@@ -70,10 +68,10 @@ func (e EC2Client) Scan() ([]map[string]interface{}, error) {
 					privateIps = append(privateIps, *pn.PrivateIpAddress)
 				}
 
-				tmp["ownerId"] = *net.OwnerId
+				tmp.OwnerID = net.OwnerId
 			}
-			tmp["private_ips"] = strings.Join(privateIps, ",")
-			tmp["ipv6"] = strings.Join(ipv6s, ",")
+			tmp.PrivateIPs = privateIps
+			tmp.IPv6s = ipv6s
 
 			sgNames := []string{}
 			sgIds := []string{}
@@ -81,14 +79,18 @@ func (e EC2Client) Scan() ([]map[string]interface{}, error) {
 				sgNames = append(sgNames, *sg.GroupName)
 				sgIds = append(sgIds, *sg.GroupId)
 			}
-			tmp["sg_names"] = strings.Join(sgNames, ",")
-			tmp["sg_ids"] = strings.Join(sgIds, ",")
+			tmp.SecurityGroupIDs = sgIds
+			tmp.SecurityGroupNames = sgNames
 		}
 
-		ret = append(ret, tmp)
+		result = append(result, tmp)
 	}
 
-	return ret, nil
+	scanResult := schema.AWSResources{
+		EC2: result,
+	}
+
+	return &scanResult, nil
 }
 
 // GetEC2Instances get all instances in the account
@@ -101,13 +103,12 @@ func (e EC2Client) GetEC2Instances() ([]*ec2.Reservation, error) {
 	return result.Reservations, nil
 }
 
-
 // NewEC2Client creates EC2Client resource with ec2 client
 func NewEC2Client(helper Helper) (Client, error) {
 	session := GetAwsSession()
 	return &EC2Client{
 		Resource: "ec2",
-		Client: GetEC2ClientFn(session, helper.Region, helper.Credentials),
+		Client:   GetEC2ClientFn(session, helper.Region, helper.Credentials),
 	}, nil
 }
 
@@ -137,4 +138,3 @@ func GetAllRegions() ([]string, error) {
 
 	return regions, nil
 }
-
