@@ -1,13 +1,15 @@
 package client
 
 import (
-	"github.com/DevopsArtFactory/redhawk/pkg/constants"
-	"github.com/DevopsArtFactory/redhawk/pkg/resource"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"strings"
+
+	"github.com/DevopsArtFactory/redhawk/pkg/constants"
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 )
 
 type Route53Client struct {
@@ -20,7 +22,7 @@ func (r Route53Client) GetResourceName() string {
 	return r.Resource
 }
 
-// NewRoute53Client creates EC2Client resource with ec2 client
+// NewRoute53Client creates a Route53Client
 func NewRoute53Client(helper Helper) (Client, error) {
 	session := GetAwsSession()
 	return &Route53Client{

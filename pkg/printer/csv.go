@@ -1,12 +1,14 @@
 package printer
 
 import (
+	"encoding/base64"
 	"encoding/csv"
 	"fmt"
-	"github.com/DevopsArtFactory/redhawk/pkg/resource"
+	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"os"
 	"time"
 
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 	"github.com/DevopsArtFactory/redhawk/pkg/tools"
 )
 
@@ -40,8 +42,18 @@ func (c CSVPrinter) SetData(provider string, d []resource.Resource) (Printer, er
 		if err != nil {
 			return nil, err
 		}
+		var tmp []string
+		if resource.GetResource() == constants.S3ResourceName && len(b[6]) > 0 {
+			decodedPolicy, err := base64.StdEncoding.DecodeString(b[6])
+			if err != nil {
+				return nil, err
+			}
+			tmp = append(b[:6], string(decodedPolicy))
+		} else {
+			tmp = b
+		}
 
-		ret[rt] = append(ret[rt], b)
+		ret[rt] = append(ret[rt], tmp)
 	}
 
 	c.Data = ret

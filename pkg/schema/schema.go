@@ -27,5 +27,6 @@ type Account struct {
 // Resource configuration with detailed conditions
 type Resource struct {
 	// Resource name
-	Name string `yaml:"name"`
+	Name   string `yaml:"name"`
+	Global bool   `yaml:"global"`
 }

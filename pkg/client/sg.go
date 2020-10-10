@@ -17,7 +17,7 @@ func (s SGClient) GetResourceName() string {
 	return s.Resource
 }
 
-// NewSGClient creates EC2Client resource with ec2 client
+// NewSGClient creates a SGClient
 func NewSGClient(helper Helper) (Client, error) {
 	session := GetAwsSession()
 	return &SGClient{

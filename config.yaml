@@ -10,13 +10,14 @@ accounts:
 # Regions to scan
 regions:
   - ap-northeast-2
-  - ap-southeast-1
   - us-east-1
+  - us-east-2
+  - us-west-1
   - us-west-2
 
 resources:
-  - name: ec2
-  - name: security_group
-  - name: rds
-  - name: route53
-  - name: iam
+#  - name: ec2
+#  - name: security_group
+#  - name: route53
+#  - name: rds
+  - name: s3

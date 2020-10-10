@@ -48,5 +48,16 @@ Route53	{{ $route53.Name }}	{{ $route53.Type }}	{{ $route53.Alias }}	{{ $route53
 	  {{- end }}
     {{- end }}
   {{- end }}
+
+  {{- if eq $key "s3" }}
+    {{- if gt (len $val) 0 }}
+
+==============================================
+SERVICE	NAME	REGION	LOGGING_ENABLED	LOGGING_BUCKET	CREATED
+	  {{- range $s3 := $val }}
+S3	{{ $s3.Bucket }}	{{ $s3.Region }}	{{ $s3.LoggingEnabled }}	{{ $s3.LoggingBucket }}	{{ $s3.Created }}
+	  {{- end }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 `

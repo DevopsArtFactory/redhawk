@@ -42,25 +42,35 @@ func (r Runner) ScanResources(out io.Writer) error {
 
 	var errors []error
 	ch := make(chan Record)
-	r.TotalCount = len(r.Builder.Config.Regions) * len(r.Builder.Config.Resources)
+	totalCount := 0
+	for _, resource := range r.Builder.Config.Resources {
+		if !resource.Global {
+			totalCount += len(r.Builder.Config.Regions)
+		} else {
+			totalCount += 1
+		}
+	}
+	r.TotalCount = totalCount
 
-	// Region based
-	for _, region := range r.Builder.Config.Regions {
+	logrus.Debugf("Resource count is %d", totalCount)
+
+	// Resources based
+	for _, t := range r.Builder.Config.Resources {
 		// Create new provider
 		prov, err := provider.CreateProvider(r.Builder.Config.Provider)
+
 		if err != nil {
 			return err
 		}
 
-		// Resources based
-		for _, t := range r.Builder.Config.Resources {
-			go func(name, region string) {
+		if t.Global {
+			logrus.Debugf("scanning global resources: %s", t.Name)
+			go func(name string) {
 				re := Record{
 					Error:    nil,
 					Resource: name,
-					Region:   region,
 				}
-				c, err := prov.CreateClient(region, name)
+				c, err := prov.CreateClient(constants.DefaultRegion, name)
 				if err != nil {
 					re.Error = err
 				} else {
@@ -68,9 +78,29 @@ func (r Runner) ScanResources(out io.Writer) error {
 					re.Error = err
 					re.Data = data
 				}
-
 				ch <- re
-			}(t.Name, region)
+			}(t.Name)
+		} else {
+			// Region based
+			for _, region := range r.Builder.Config.Regions {
+				logrus.Debugf("scanning regional resources: %s / %s", region, t.Name)
+				go func(name, region string) {
+					re := Record{
+						Error:    nil,
+						Resource: name,
+						Region:   region,
+					}
+					c, err := prov.CreateClient(region, name)
+					if err != nil {
+						re.Error = err
+					} else {
+						data, err := c.Scan()
+						re.Error = err
+						re.Data = data
+					}
+					ch <- re
+				}(t.Name, region)
+			}
 		}
 	}
 
@@ -82,6 +112,7 @@ func (r Runner) ScanResources(out io.Writer) error {
 		record := <-ch
 
 		if record.Data != nil {
+			logrus.Debugf("data found: %s / %s / %s", record.Region, record.Resource, record.Data[0].GetResource())
 			result.Resources = append(result.Resources, record.Data...)
 		}
 
@@ -89,6 +120,8 @@ func (r Runner) ScanResources(out io.Writer) error {
 			errors = append(errors, record.Error)
 		}
 	}
+
+	logrus.Debugf("Completed gathering all data")
 
 	outputFormat := viper.GetString("output")
 	if err := tools.CheckValidFormat(outputFormat); err != nil {

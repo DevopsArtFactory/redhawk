@@ -73,15 +73,14 @@ func SetDefault(builder *Builder) *Builder {
 
 // defaultResources returns a list of all target resources
 func defaultResources() []schema.Resource {
-	return []schema.Resource{
-		{
-			Name: constants.EC2ResourceName,
-		},
-		{
-			Name: constants.SGResourceName,
-		},
-		{
-			Name: constants.Route53ResourceName,
-		},
+	var ret []schema.Resource
+	for _, rc := range constants.ResourceConfigs {
+		if rc.Default {
+			ret = append(ret, schema.Resource{
+				Name:   rc.Name,
+				Global: rc.Global,
+			})
+		}
 	}
+	return ret
 }

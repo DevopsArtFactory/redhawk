@@ -23,9 +23,12 @@ const (
 	DefaultOutputFormat = "stdout"
 
 	// Resource Name Constants
+	// After add resource here, you have to setup `ResourceConfig` in the var section
 	EC2ResourceName     = "ec2"
 	SGResourceName      = "security_group"
 	Route53ResourceName = "route53"
+	S3ResourceName      = "s3"
+	RDSResourceName     = "rds"
 )
 
 var (
@@ -53,6 +56,33 @@ var (
 	ValidFormats = []string{
 		"stdout",
 		"csv",
+	}
+	ResourceConfigs = []ResourceConfig{
+		{
+			Name:    EC2ResourceName,
+			Default: true,
+			Global:  false,
+		},
+		{
+			Name:    SGResourceName,
+			Default: true,
+			Global:  false,
+		},
+		{
+			Name:    Route53ResourceName,
+			Default: true,
+			Global:  false,
+		},
+		{
+			Name:    S3ResourceName,
+			Default: true,
+			Global:  false,
+		},
+		{
+			Name:    RDSResourceName,
+			Default: true,
+			Global:  false,
+		},
 	}
 )
 
