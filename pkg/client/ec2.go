@@ -1,13 +1,15 @@
 package client
 
 import (
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
-	"github.com/DevopsArtFactory/redhawk/pkg/schema"
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 )
 
 type EC2Client struct {
@@ -15,20 +17,23 @@ type EC2Client struct {
 	Client   *ec2.EC2
 }
 
+// GetResourceName returns resource name of client
 func (e EC2Client) GetResourceName() string {
 	return e.Resource
 }
 
 // Scan scans all data
-func (e EC2Client) Scan() (*schema.AWSResources, error) {
-	var result []schema.EC2Resource
+func (e EC2Client) Scan() ([]resource.Resource, error) {
+	var result []resource.Resource
 
 	reservations, err := e.GetEC2Instances()
 	if err != nil {
 		return nil, err
 	}
 	for _, reservation := range reservations {
-		tmp := schema.EC2Resource{}
+		tmp := resource.EC2Resource{
+			ResourceType: aws.String(constants.EC2ResourceName),
+		}
 		for _, instance := range reservation.Instances {
 			tmp.InstanceID = instance.InstanceId
 			tmp.InstanceStatus = instance.State.Name
@@ -70,8 +75,8 @@ func (e EC2Client) Scan() (*schema.AWSResources, error) {
 
 				tmp.OwnerID = net.OwnerId
 			}
-			tmp.PrivateIPs = privateIps
-			tmp.IPv6s = ipv6s
+			tmp.PrivateIPs = aws.String(strings.Join(privateIps, "|"))
+			tmp.IPv6s = aws.String(strings.Join(ipv6s, "|"))
 
 			sgNames := []string{}
 			sgIds := []string{}
@@ -79,18 +84,14 @@ func (e EC2Client) Scan() (*schema.AWSResources, error) {
 				sgNames = append(sgNames, *sg.GroupName)
 				sgIds = append(sgIds, *sg.GroupId)
 			}
-			tmp.SecurityGroupIDs = sgIds
-			tmp.SecurityGroupNames = sgNames
+			tmp.SecurityGroupIDs = aws.String(strings.Join(sgIds, "|"))
+			tmp.SecurityGroupNames = aws.String(strings.Join(sgNames, "|"))
 		}
 
 		result = append(result, tmp)
 	}
 
-	scanResult := schema.AWSResources{
-		EC2: result,
-	}
-
-	return &scanResult, nil
+	return result, nil
 }
 
 // GetEC2Instances get all instances in the account
@@ -107,7 +108,7 @@ func (e EC2Client) GetEC2Instances() ([]*ec2.Reservation, error) {
 func NewEC2Client(helper Helper) (Client, error) {
 	session := GetAwsSession()
 	return &EC2Client{
-		Resource: "ec2",
+		Resource: constants.EC2ResourceName,
 		Client:   GetEC2ClientFn(session, helper.Region, helper.Credentials),
 	}, nil
 }

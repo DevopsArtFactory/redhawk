@@ -23,7 +23,7 @@ func CreateNewBuilder() (*Builder, error) {
 	configPath := viper.GetString("config")
 
 	if len(configPath) == 0 {
-		logrus.Warnf("you have no config file")
+		logrus.Debug("you have no config file")
 		return nil, nil
 	}
 
@@ -75,7 +75,13 @@ func SetDefault(builder *Builder) *Builder {
 func defaultResources() []schema.Resource {
 	return []schema.Resource{
 		{
-			Name: "ec2",
+			Name: constants.EC2ResourceName,
+		},
+		{
+			Name: constants.SGResourceName,
+		},
+		{
+			Name: constants.Route53ResourceName,
 		},
 	}
 }

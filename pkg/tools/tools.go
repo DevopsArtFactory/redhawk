@@ -2,6 +2,7 @@ package tools
 
 import (
 	"fmt"
+	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"io"
 	"os"
 	"time"
@@ -59,5 +60,14 @@ func SetUpLogs(stdErr io.Writer, level string) error {
 		return fmt.Errorf("parsing log level: %w", err)
 	}
 	logrus.SetLevel(lvl)
+	return nil
+}
+
+// CheckValidFormat checks if format is valid or not
+func CheckValidFormat(format string) error {
+	if !IsStringInArray(format, constants.ValidFormats) {
+		return fmt.Errorf("format is not supported: %s", format)
+	}
+
 	return nil
 }

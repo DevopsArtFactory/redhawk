@@ -12,7 +12,7 @@ type AWSProvider struct {
 // NewAWSProvider creates AWS Provider
 func NewAWSProvider() Provider {
 	return AWSProvider{
-		Provider: "client",
+		Provider: "aws",
 	}
 }
 

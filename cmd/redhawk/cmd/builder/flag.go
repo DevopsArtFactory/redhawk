@@ -45,6 +45,23 @@ var FlagRegistry = []Flag{
 		FlagAddMethod: "StringVar",
 		DefinedOn:     []string{"scan-resources"},
 	},
+	{
+		Name:          "detail",
+		Usage:         "detailed options for scanning",
+		Value:         aws.Bool(false),
+		DefValue:      false,
+		FlagAddMethod: "BoolVar",
+		DefinedOn:     []string{"scan-resources"},
+	},
+	{
+		Name:          "output",
+		Usage:         "detailed options for scanning",
+		Shorthand:     "o",
+		Value:         aws.String(constants.DefaultOutputFormat),
+		DefValue:      constants.DefaultOutputFormat,
+		FlagAddMethod: "StringVar",
+		DefinedOn:     []string{"scan-resources"},
+	},
 }
 
 func (fl *Flag) flag() *pflag.Flag {

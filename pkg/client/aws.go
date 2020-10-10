@@ -2,15 +2,14 @@ package client
 
 import (
 	"fmt"
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
-
-	"github.com/DevopsArtFactory/redhawk/pkg/schema"
 )
 
 type Client interface {
 	GetResourceName() string
-	Scan() (*schema.AWSResources, error)
+	Scan() ([]resource.Resource, error)
 }
 
 type Helper struct {

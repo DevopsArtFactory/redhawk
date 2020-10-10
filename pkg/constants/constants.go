@@ -17,13 +17,15 @@ const (
 	EmptyString = ""
 
 	// DefaultProvider returns default provider for redhawk
-	DefaultProvider = "client"
+	DefaultProvider = "aws"
 
-	// DefaultProfile is the default client profile
-	DefaultProfile = "default"
+	// DefaultOutputFormat is a default format for output
+	DefaultOutputFormat = "stdout"
 
-	// InfoLogLevel is the info level verbosity
-	InfoLogLevel = logrus.InfoLevel
+	// Resource Name Constants
+	EC2ResourceName     = "ec2"
+	SGResourceName      = "security_group"
+	Route53ResourceName = "route53"
 )
 
 var (
@@ -45,6 +47,12 @@ var (
 		"us-east-2",
 		"us-west-1",
 		"us-west-2",
+	}
+
+	// ValidFormat is a list of valid output format for scan data
+	ValidFormats = []string{
+		"stdout",
+		"csv",
 	}
 )
 

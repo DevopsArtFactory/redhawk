@@ -1,20 +1,17 @@
 package runner
 
 import (
-	"html/template"
-	"io"
-	"text/tabwriter"
-
+	"github.com/DevopsArtFactory/redhawk/pkg/printer"
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
+	"github.com/DevopsArtFactory/redhawk/pkg/tools"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"io"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/builder"
 	"github.com/DevopsArtFactory/redhawk/pkg/client"
-	"github.com/DevopsArtFactory/redhawk/pkg/color"
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"github.com/DevopsArtFactory/redhawk/pkg/provider"
-	"github.com/DevopsArtFactory/redhawk/pkg/schema"
-	"github.com/DevopsArtFactory/redhawk/pkg/templates"
 )
 
 type Runner struct {
@@ -27,7 +24,7 @@ type Record struct {
 	Error    error
 	Resource string
 	Region   string
-	Data     *schema.AWSResources
+	Data     []resource.Resource
 }
 
 func New() *Runner {
@@ -77,12 +74,15 @@ func (r Runner) ScanResources(out io.Writer) error {
 		}
 	}
 
-	result := schema.AWSResources{}
+	result := resource.Resources{
+		Provider: r.Builder.Config.Provider,
+	}
+
 	for i := 0; i < r.TotalCount; i++ {
 		record := <-ch
 
 		if record.Data != nil {
-			setReturnData(&result, record.Data, record.Resource)
+			result.Resources = append(result.Resources, record.Data...)
 		}
 
 		if record.Error != nil {
@@ -90,41 +90,24 @@ func (r Runner) ScanResources(out io.Writer) error {
 		}
 	}
 
-	if err := PrintScanResult(out, r.Builder.Config.Provider, result); err != nil {
+	outputFormat := viper.GetString("output")
+	if err := tools.CheckValidFormat(outputFormat); err != nil {
 		return err
 	}
-	return nil
-}
 
-// setReturnData sets return value to result
-func setReturnData(result, data *schema.AWSResources, resource string) {
-	switch resource {
-	case "ec2":
-		result.EC2 = append(result.EC2, data.EC2...)
-	}
-}
-
-// PrintScanResult prints scan result
-func PrintScanResult(out io.Writer, provider string, result schema.AWSResources) error {
-	var scanData = struct {
-		Summary  schema.AWSResources
-		Provider string
-	}{
-		Summary:  result,
-		Provider: provider,
-	}
-
-	funcMap := template.FuncMap{
-		"decorate": color.DecorateAttr,
-	}
-
-	// Template for scan result
-	w := tabwriter.NewWriter(out, 0, 5, 3, ' ', tabwriter.TabIndent)
-	t := template.Must(template.New("Result").Funcs(funcMap).Parse(templates.Templates[provider]))
-
-	err := t.Execute(w, scanData)
+	printer, err := printer.SelectPrinter(outputFormat)
 	if err != nil {
 		return err
 	}
-	return w.Flush()
+
+	pr, err := printer.SetData(result.Provider, result.Resources)
+	if err != nil {
+		return err
+	}
+
+	if err := pr.Print(); err != nil {
+		return err
+	}
+
+	return nil
 }
