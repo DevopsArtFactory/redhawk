@@ -1,10 +1,11 @@
 package client
 
 import (
-	"github.com/DevopsArtFactory/redhawk/pkg/constants"
-	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+
+	"github.com/DevopsArtFactory/redhawk/pkg/constants"
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 )
 
 type SGClient struct {

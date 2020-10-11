@@ -18,6 +18,7 @@ regions:
 resources:
 #  - name: ec2
 #  - name: security_group
-  - name: route53
+#  - name: route53
 #  - name: rds
 #  - name: s3
+  - name: iam

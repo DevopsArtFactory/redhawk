@@ -5,9 +5,10 @@ COMMAND_PKG ?= cmd
 ORG = github.com/DevopsArtFactory
 PROJECT = redhawk
 REPOPATH ?= $(ORG)/$(PROJECT)
-RELEASE_BUCKET ?= benx-devops-files
+RELEASE_BUCKET ?= devopsartfactory
 S3_RELEASE_PATH ?= s3://$(RELEASE_BUCKET)/$(PROJECT)/releases/$(VERSION)
 S3_RELEASE_LATEST ?= s3://$(RELEASE_BUCKET)/$(PROJECT)/releases/latest
+S3_BLEEDING_EDGE_LATEST ?= s3://$(RELEASE_BUCKET)/edge/latest
 
 GCP_ONLY ?= false
 GCP_PROJECT ?= redhawk
@@ -84,8 +85,11 @@ $(BUILD_DIR)/VERSION: $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
+.PHONY: update-edge
+update-edge: format cross $(BUILD_DIR)/VERSION upload-edge-only
+
 .PHONY: release
-release: clean format linters test permission cross $(BUILD_DIR)/VERSION upload-only
+release: clean format linters test cross $(BUILD_DIR)/VERSION upload-only
 
 .PHONY: build
 build: format cross $(BUILD_DIR)/VERSION
@@ -95,6 +99,10 @@ upload-only: version
 	@ cp $(BUILD_DIR)/$(PROJECT)-darwin-amd64 $(BUILD_DIR)/$(PROJECT)
 	@ aws s3 cp $(BUILD_DIR)/ $(S3_RELEASE_PATH)/ --recursive --include "$(PROJECT)-*" --acl public-read
 	@ aws s3 cp $(S3_RELEASE_PATH)/ $(S3_RELEASE_LATEST)/ --recursive --acl public-read
+
+.PHONY: upload-edge-only
+upload-edge-only: version
+	aws s3 cp $(BUILD_DIR)/ $(S3_BLEEDING_EDGE_LATEST)/ --recursive --include "$(PROJECT)-*" --acl public-read
 
 .PHONY: clean
 clean:
@@ -116,12 +124,6 @@ test:
 coverage: $(BUILD_DIR)
 	@ go test -count=1 -race -cover -short -timeout=90s -coverprofile=out/coverage.txt -coverpkg="./pkg/...,./hack..." $(TEST_PACKAGES)
 	@- curl -s https://codecov.io/bash > $(BUILD_DIR)/upload_coverage && bash $(BUILD_DIR)/upload_coverage
-
-.PHONY: permission
-permission:
-	@ go run hack/release/check_permission.go \
-	$(shell aws sts get-caller-identity | jq -r .Arn | cut -d'/' -f 2) \
-	$(RELEASE_BUCKET)
 
 .PHONY: linters
 linters: $(BUILD_DIR)

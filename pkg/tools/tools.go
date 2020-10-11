@@ -3,6 +3,7 @@ package tools
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"time"
 
@@ -71,4 +72,14 @@ func CheckValidFormat(format string) error {
 	}
 
 	return nil
+}
+
+// DecodeURLEncodedString decodes url-encoded string
+func DecodeURLEncodedString(encoded string) (string, error) {
+	decoded, err := url.QueryUnescape(encoded)
+	if err != nil {
+		return constants.EmptyString, err
+	}
+
+	return decoded, nil
 }

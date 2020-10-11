@@ -89,10 +89,8 @@ type RDSResource struct {
 	Created          *time.Time `json:"created,omitempty"`
 }
 
-type IAMResource struct {
-	ResourceType *string `json:"resource_type,omitempty"`
-
-	// IAM User
+type IAMUserResource struct {
+	ResourceType      *string    `json:"resource_type,omitempty"`
 	UserName          *string    `json:"user_name,omitempty"`
 	AccessKeyAge      *string    `json:"access_key_age,omitempty"`
 	PasswordAge       *string    `json:"password_age,omitempty"`
@@ -102,14 +100,19 @@ type IAMResource struct {
 	ConsoleLastLogin  *time.Time `json:"console_last_login,omitempty"`
 	AccessKeyLastUsed *time.Time `json:"access_key_last_usec,omitempty"`
 	UserCreated       *time.Time `json:"created,omitempty"`
+}
 
-	// IAM Group
-	GroupName   *string `json:"group_name,omitempty"`
-	Users       *string `json:"users,omitempty"`
-	Permissions *string `json:"permissions,omitempty"`
+type IAMGroupResource struct {
+	ResourceType  *string `json:"resource_type,omitempty"`
+	GroupName     *string `json:"group_name,omitempty"`
+	Users         *string `json:"users,omitempty"`
+	UserCount     *int    `json:"user_count,omitempty"`
+	GroupPolicies *string `json:"group_policies,omitempty"`
+}
 
-	// IAM Role
-	RoleName         *string `json:"role_name,omitempty"`
-	TrustedEntities  *string `json:"trusted_entities,omitempty"`
-	RoleLastActivity *string `json:"role_last_activity,omitempty"`
+type IAMRoleResource struct {
+	ResourceType     *string    `json:"resource_type,omitempty"`
+	RoleName         *string    `json:"role_name,omitempty"`
+	TrustedEntities  *string    `json:"trusted_entities,omitempty"`
+	RoleLastActivity *time.Time `json:"role_last_activity,omitempty"`
 }

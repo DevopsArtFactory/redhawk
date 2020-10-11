@@ -22,18 +22,24 @@ const (
 	// DefaultOutputFormat is a default format for output
 	DefaultOutputFormat = "stdout"
 
+	// DefaultDelimiter is a default delimiter for csv output
+	DefaultDelimiter = "|"
+
 	// Resource Name Constants
 	// After add resource here, you have to setup `ResourceConfig` in the var section
-	EC2ResourceName     = "ec2"
-	SGResourceName      = "security_group"
-	Route53ResourceName = "route53"
-	S3ResourceName      = "s3"
-	RDSResourceName     = "rds"
-	IAMResourceName     = "iam"
+	EC2ResourceName      = "ec2"
+	SGResourceName       = "security_group"
+	Route53ResourceName  = "route53"
+	S3ResourceName       = "s3"
+	RDSResourceName      = "rds"
+	IAMResourceName      = "iam"
+	IAMUserResourceName  = "iam_user"
+	IAMGroupResourceName = "iam_group"
+	IAMRoleResourceName  = "iam_role"
 )
 
 var (
-	// AllRegions is a list of all AWS Region
+	// AllAWSRegions is a list of all AWS Region
 	AllAWSRegions = []string{
 		"eu-north-1",
 		"ap-south-1",
@@ -53,7 +59,7 @@ var (
 		"us-west-2",
 	}
 
-	// ValidFormat is a list of valid output format for scan data
+	// ValidFormats is a list of valid output format for scan data
 	ValidFormats = []string{
 		"stdout",
 		"csv",

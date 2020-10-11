@@ -83,19 +83,19 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 			for _, vpcSgID := range dbInfo.VpcSecurityGroups {
 				sgList = append(sgList, *vpcSgID.VpcSecurityGroupId)
 			}
-			tmp.SecurityGroup = aws.String(strings.Join(sgList, "|"))
+			tmp.SecurityGroup = aws.String(strings.Join(sgList, constants.DefaultDelimiter))
 
 			var parameterGroups []string
 			for _, pg := range dbInfo.DBParameterGroups {
 				parameterGroups = append(parameterGroups, *pg.DBParameterGroupName)
 			}
-			tmp.ParameterGroup = aws.String(strings.Join(parameterGroups, "|"))
+			tmp.ParameterGroup = aws.String(strings.Join(parameterGroups, constants.DefaultDelimiter))
 
 			var optionGroups []string
 			for _, og := range dbInfo.OptionGroupMemberships {
 				optionGroups = append(optionGroups, *og.OptionGroupName)
 			}
-			tmp.OptionGroup = aws.String(strings.Join(optionGroups, "|"))
+			tmp.OptionGroup = aws.String(strings.Join(optionGroups, constants.DefaultDelimiter))
 
 			logrus.Tracef("Add new rds instance: %s / %s", *tmp.RDSIdentifier, *tmp.Role)
 			result = append(result, tmp)

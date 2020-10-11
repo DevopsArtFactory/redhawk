@@ -1,17 +1,18 @@
 package runner
 
 import (
-	"github.com/DevopsArtFactory/redhawk/pkg/printer"
-	"github.com/DevopsArtFactory/redhawk/pkg/resource"
-	"github.com/DevopsArtFactory/redhawk/pkg/tools"
+	"io"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"io"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/builder"
 	"github.com/DevopsArtFactory/redhawk/pkg/client"
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
+	"github.com/DevopsArtFactory/redhawk/pkg/printer"
 	"github.com/DevopsArtFactory/redhawk/pkg/provider"
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
+	"github.com/DevopsArtFactory/redhawk/pkg/tools"
 )
 
 type Runner struct {

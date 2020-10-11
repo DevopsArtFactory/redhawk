@@ -2,13 +2,13 @@ package client
 
 import (
 	"encoding/base64"
-	"github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/sirupsen/logrus"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"github.com/DevopsArtFactory/redhawk/pkg/resource"
@@ -73,7 +73,7 @@ func (r Route53Client) Scan() ([]resource.Resource, error) {
 			for _, rr := range rs.ResourceRecords {
 				routeTo = append(routeTo, *rr.Value)
 			}
-			rt := strings.Join(routeTo, "|")
+			rt := strings.Join(routeTo, constants.DefaultDelimiter)
 			logrus.Tracef("DNS route with records found: %s", rt)
 			// base64 encoding
 			base64RouteTo := base64.StdEncoding.EncodeToString([]byte(rt))

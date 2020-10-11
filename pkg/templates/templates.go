@@ -77,5 +77,35 @@ RDS	{{ $rds.RDSIdentifier }}	{{ $rds.Role }}	{{ $rds.Engine }}	{{ $rds.Size }}	{
 	  {{- end }}
     {{- end }}
   {{- end }}
+
+  {{- if eq $key "iam_user" }}
+    {{- if gt (len $val) 0 }}
+==============================================
+SERVICE	NAME	MFA	GROUP_COUNT	ACCESS_KEY_LAST_USED	CREATED
+	  {{- range $iamUser := $val }}
+IAM_USER	{{ $iamUser.UserName }}	{{ $iamUser.MFA }}	{{ $iamUser.GroupCount }}	{{ $iamUser.AccessKeyLastUsed }}	{{ $iamUser.UserCreated }}
+	  {{- end }}
+    {{- end }}
+  {{- end }}
+
+  {{- if eq $key "iam_group" }}
+    {{- if gt (len $val) 0 }}
+==============================================
+SERVICE	NAME	USER_COUNT	USERS	GROUP_POLICIES
+	  {{- range $iamGroup := $val }}
+IAM_GROUP	{{ $iamGroup.GroupName }}	{{ $iamGroup.UserCount }}	{{ $iamGroup.Users }}	{{ $iamGroup.GroupPolicies }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+  {{- if eq $key "iam_role" }}
+    {{- if gt (len $val) 0 }}
+==============================================
+SERVICE	NAME	TRUST_ENTITIES	ROLE_LAST_ACTIVITY
+	  {{- range $iamRole := $val }}
+IAM_ROLE	{{ $iamRole.RoleName }}	{{ $iamRole.TrustedEntities }}	{{ $iamRole.RoleLastActivity }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 `

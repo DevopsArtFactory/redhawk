@@ -11,5 +11,6 @@ var (
 		constants.Route53ResourceName: NewRoute53Client,
 		constants.S3ResourceName:      NewS3Client,
 		constants.RDSResourceName:     NewRDSClient,
+		constants.IAMResourceName:     NewIAMClient,
 	}
 )

@@ -80,8 +80,8 @@ func (e EC2Client) Scan() ([]resource.Resource, error) {
 
 				tmp.OwnerID = net.OwnerId
 			}
-			tmp.PrivateIPs = aws.String(strings.Join(privateIps, "|"))
-			tmp.IPv6s = aws.String(strings.Join(ipv6s, "|"))
+			tmp.PrivateIPs = aws.String(strings.Join(privateIps, constants.DefaultDelimiter))
+			tmp.IPv6s = aws.String(strings.Join(ipv6s, constants.DefaultDelimiter))
 
 			var sgNames []string
 			var sgIds []string
@@ -89,8 +89,8 @@ func (e EC2Client) Scan() ([]resource.Resource, error) {
 				sgNames = append(sgNames, *sg.GroupName)
 				sgIds = append(sgIds, *sg.GroupId)
 			}
-			tmp.SecurityGroupIDs = aws.String(strings.Join(sgIds, "|"))
-			tmp.SecurityGroupNames = aws.String(strings.Join(sgNames, "|"))
+			tmp.SecurityGroupIDs = aws.String(strings.Join(sgIds, constants.DefaultDelimiter))
+			tmp.SecurityGroupNames = aws.String(strings.Join(sgNames, constants.DefaultDelimiter))
 		}
 
 		logrus.Tracef("Instance is added: %s", *tmp.InstanceID)
