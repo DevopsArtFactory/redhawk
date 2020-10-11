@@ -11,7 +11,7 @@ const (
 	DefaultLogLevel = logrus.WarnLevel
 
 	// DefaultRegion is the default region id
-	DefaultRegion = "ap-northeast-2"
+	DefaultRegion = "us-east-1"
 
 	// EmptyString is the empty string
 	EmptyString = ""

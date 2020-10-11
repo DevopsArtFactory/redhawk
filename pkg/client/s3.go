@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/sirupsen/logrus"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"github.com/DevopsArtFactory/redhawk/pkg/resource"
@@ -55,11 +56,13 @@ func GetS3ClientFn(sess client.ConfigProvider, region string, creds *credentials
 func (s S3Client) Scan() ([]resource.Resource, error) {
 	var result []resource.Resource
 
+	logrus.Debug("Start scanning all buckets in the account")
 	buckets, err := s.GetBucketList()
 	if err != nil {
 		return nil, err
 	}
 
+	logrus.Debugf("Buckets found: %d", len(buckets))
 	for _, bucket := range buckets {
 		tmp := resource.S3Resource{
 			ResourceType: aws.String(constants.S3ResourceName),
@@ -68,6 +71,10 @@ func (s S3Client) Scan() ([]resource.Resource, error) {
 		location, err := s.GetBucketLocation(*bucket.Name)
 		if err != nil {
 			continue
+		}
+
+		if location == nil {
+			location = aws.String(constants.DefaultRegion)
 		}
 		tmp.Region = location
 
@@ -89,11 +96,15 @@ func (s S3Client) Scan() ([]resource.Resource, error) {
 		if err != nil {
 			tmp.Policy = nil
 		} else {
+			logrus.Tracef("Bucket policy found: %s", tmp.Bucket)
 			// base64 encoding
 			base64Policy := base64.StdEncoding.EncodeToString([]byte(*policy))
+
+			logrus.Tracef("Policy is base64 encoded: %s", base64Policy)
 			tmp.Policy = &base64Policy
 		}
 
+		logrus.Tracef("new bucket is added: %s / %s", *tmp.Bucket, *tmp.Region)
 		result = append(result, tmp)
 	}
 

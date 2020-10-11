@@ -1,6 +1,8 @@
 package client
 
 import (
+	"encoding/base64"
+	"github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -48,16 +50,22 @@ func (r Route53Client) Scan() ([]resource.Resource, error) {
 		return nil, err
 	}
 
+	logrus.Debugf("Record sets found: %d", len(recordSets))
 	for _, rs := range recordSets {
 		tmp := resource.Route53Resource{
 			ResourceType: aws.String(constants.Route53ResourceName),
 		}
+
 		tmp.Name = rs.Name
 		tmp.Type = rs.Type
 
 		if rs.AliasTarget != nil {
 			tmp.Alias = aws.Bool(true)
-			tmp.RouteTo = rs.AliasTarget.DNSName
+			logrus.Tracef("DNS route with alias found: %s", rs.AliasTarget.DNSName)
+			base64RouteTo := base64.StdEncoding.EncodeToString([]byte(*rs.AliasTarget.DNSName))
+
+			logrus.Tracef("DNS route is base64 encoded: %s", base64RouteTo)
+			tmp.RouteTo = aws.String(base64RouteTo)
 		}
 
 		if len(rs.ResourceRecords) > 0 {
@@ -65,7 +73,12 @@ func (r Route53Client) Scan() ([]resource.Resource, error) {
 			for _, rr := range rs.ResourceRecords {
 				routeTo = append(routeTo, *rr.Value)
 			}
-			tmp.RouteTo = aws.String(strings.Join(routeTo, "|"))
+			rt := strings.Join(routeTo, "|")
+			logrus.Tracef("DNS route with records found: %s", rt)
+			// base64 encoding
+			base64RouteTo := base64.StdEncoding.EncodeToString([]byte(rt))
+			logrus.Tracef("DNS route is base64 encoded: %s", base64RouteTo)
+			tmp.RouteTo = aws.String(base64RouteTo)
 			tmp.Alias = aws.Bool(false)
 		}
 

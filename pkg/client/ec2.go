@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/sirupsen/logrus"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"github.com/DevopsArtFactory/redhawk/pkg/resource"
@@ -26,14 +27,18 @@ func (e EC2Client) GetResourceName() string {
 func (e EC2Client) Scan() ([]resource.Resource, error) {
 	var result []resource.Resource
 
+	logrus.Debugf("Start to scan all ec2 instances")
 	reservations, err := e.GetEC2Instances()
 	if err != nil {
 		return nil, err
 	}
+
+	logrus.Debugf("Instances found: %d", len(reservations))
 	for _, reservation := range reservations {
 		tmp := resource.EC2Resource{
 			ResourceType: aws.String(constants.EC2ResourceName),
 		}
+
 		for _, instance := range reservation.Instances {
 			tmp.InstanceID = instance.InstanceId
 			tmp.InstanceStatus = instance.State.Name
@@ -62,8 +67,8 @@ func (e EC2Client) Scan() ([]resource.Resource, error) {
 				}
 			}
 
-			privateIps := []string{}
-			ipv6s := []string{}
+			var privateIps []string
+			var ipv6s []string
 			for _, net := range instance.NetworkInterfaces {
 				for _, v6 := range net.Ipv6Addresses {
 					ipv6s = append(ipv6s, *v6.Ipv6Address)
@@ -78,8 +83,8 @@ func (e EC2Client) Scan() ([]resource.Resource, error) {
 			tmp.PrivateIPs = aws.String(strings.Join(privateIps, "|"))
 			tmp.IPv6s = aws.String(strings.Join(ipv6s, "|"))
 
-			sgNames := []string{}
-			sgIds := []string{}
+			var sgNames []string
+			var sgIds []string
 			for _, sg := range instance.SecurityGroups {
 				sgNames = append(sgNames, *sg.GroupName)
 				sgIds = append(sgIds, *sg.GroupId)
@@ -88,6 +93,7 @@ func (e EC2Client) Scan() ([]resource.Resource, error) {
 			tmp.SecurityGroupNames = aws.String(strings.Join(sgNames, "|"))
 		}
 
+		logrus.Tracef("Instance is added: %s", *tmp.InstanceID)
 		result = append(result, tmp)
 	}
 
@@ -123,6 +129,7 @@ func GetEC2ClientFn(sess client.ConfigProvider, region string, creds *credential
 
 // GetAllRegions will returns all regions
 func GetAllRegions() ([]string, error) {
+	logrus.Debug("Retrieve all regions in the AWS provider")
 	svc := ec2.New(GetAwsSession(), &aws.Config{Region: aws.String(constants.DefaultRegion)})
 
 	input := &ec2.DescribeRegionsInput{}

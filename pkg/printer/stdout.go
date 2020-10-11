@@ -4,6 +4,7 @@ import (
 	"github.com/DevopsArtFactory/redhawk/pkg/color"
 	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 	"github.com/DevopsArtFactory/redhawk/pkg/templates"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"html/template"
 	"io"
@@ -41,6 +42,8 @@ func (s StdOutPrinter) SetData(provider string, d []resource.Resource) (Printer,
 
 // Print shows data to Standard Out
 func (s StdOutPrinter) Print() error {
+	detail := viper.GetBool("detail")
+	logrus.Debugf("Detailed mode enabled: %t", detail)
 	var scanData = struct {
 		Summary  map[string][]resource.Resource
 		Provider string
@@ -48,7 +51,7 @@ func (s StdOutPrinter) Print() error {
 	}{
 		Summary:  s.Data,
 		Provider: s.Provider,
-		Detail:   viper.GetBool("detail"),
+		Detail:   detail,
 	}
 
 	funcMap := template.FuncMap{

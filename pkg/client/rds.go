@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -46,6 +47,7 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 		return nil, err
 	}
 
+	logrus.Debugf("RDS clusters found: %d", len(clusters))
 	for _, cluster := range clusters {
 		for _, dbMember := range cluster.DBClusterMembers {
 			tmp := resource.RDSResource{
@@ -76,8 +78,8 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 			tmp.Created = dbInfo.InstanceCreateTime
 
 			var sgList []string
-			for _, vpcSGID := range dbInfo.VpcSecurityGroups {
-				sgList = append(sgList, *vpcSGID.VpcSecurityGroupId)
+			for _, vpcSgID := range dbInfo.VpcSecurityGroups {
+				sgList = append(sgList, *vpcSgID.VpcSecurityGroupId)
 			}
 			tmp.SecurityGroup = aws.String(strings.Join(sgList, "|"))
 
@@ -93,6 +95,7 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 			}
 			tmp.OptionGroup = aws.String(strings.Join(optionGroups, "|"))
 
+			logrus.Tracef("Add new rds instance: %s / %s", *tmp.RDSIdentifier, *tmp.Role)
 			result = append(result, tmp)
 		}
 

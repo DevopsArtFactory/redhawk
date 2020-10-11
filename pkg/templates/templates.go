@@ -59,5 +59,23 @@ S3	{{ $s3.Bucket }}	{{ $s3.Region }}	{{ $s3.LoggingEnabled }}	{{ $s3.LoggingBuck
 	  {{- end }}
     {{- end }}
   {{- end }}
+
+  {{- if eq $key "rds" }}
+    {{- if gt (len $val) 0 }}
+	  {{- if $.Detail }}
+==============================================
+SERVICE	IDENTIFIER	ROLE	ENGINE	VERSION	SIZE	STATUS	AZ	STORAGE	OPTION_GROUPS	PARAMETER_GROUPS	SUBNET_GROUP	CREATED
+	    {{- range $rds := $val }}
+RDS	{{ $rds.RDSIdentifier }}	{{ $rds.Role }}	{{ $rds.Engine }}	{{ $rds.EngineVersion }}	{{ $rds.Size }}	{{ $rds.Status }}	{{ $rds.AvailabilityZone }}	{{ $rds.StorageType }}	{{ $rds.OptionGroup }}	{{ $rds.ParameterGroup }}	{{ $rds.DBSubnet }}	{{ $rds.Created }}
+	    {{- end }}
+	  {{- else }}
+==============================================
+SERVICE	IDENTIFIER	ROLE	ENGINE	SIZE	STATUS	AZ	CREATED
+	    {{- range $rds := $val }}
+RDS	{{ $rds.RDSIdentifier }}	{{ $rds.Role }}	{{ $rds.Engine }}	{{ $rds.Size }}	{{ $rds.Status }}	{{ $rds.AvailabilityZone }}	{{ $rds.Created }}
+	    {{- end }}
+	  {{- end }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 `

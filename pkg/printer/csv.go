@@ -49,7 +49,12 @@ func (c CSVPrinter) SetData(provider string, d []resource.Resource) (Printer, er
 				return nil, err
 			}
 			tmp = append(b[:6], string(decodedPolicy))
-		} else {
+		} else if resource.GetResource() == constants.Route53ResourceName && len(b[4]) > 0 {
+			decodedRouteTo, err := base64.StdEncoding.DecodeString(b[4])
+			if err != nil {
+				return nil, err
+			}
+			b[4] = string(decodedRouteTo)
 			tmp = b
 		}
 
