@@ -34,7 +34,7 @@ func New() *Runner {
 
 // ScanResources retrieves resources in AWS
 func (r Runner) ScanResources(out io.Writer) error {
-	logrus.Debug("start scanning resources")
+	logrus.Info("start scanning resources")
 
 	//var errors []error
 	ch := make(chan Record)
