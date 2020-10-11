@@ -64,6 +64,7 @@ func (r Runner) ScanResources(out io.Writer) error {
 			go func(name string) {
 				re := Record{
 					Error:    nil,
+					Region:   constants.DefaultRegion,
 					Resource: name,
 				}
 				c, err := prov.CreateClient(constants.DefaultRegion, name)

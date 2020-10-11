@@ -8,7 +8,7 @@ type Config struct {
 	// Multi accounts name and role for AWS Provider
 	Accounts []Account `yaml:"accounts,omitempty"`
 
-	// List of regions. All regions will be applied if no region specified
+	// List of regions. Default region of provider will be applied if no region specified
 	Regions []string `yaml:"regions,omitempty"`
 
 	// List of resources. All resources will be applied if no resources specified

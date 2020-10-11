@@ -64,36 +64,40 @@ var (
 		"stdout",
 		"csv",
 	}
+
+	ResourceGlobal = map[string]bool{
+		EC2ResourceName:     false,
+		SGResourceName:      false,
+		Route53ResourceName: false,
+		S3ResourceName:      false,
+		RDSResourceName:     false,
+		IAMResourceName:     true,
+	}
+
 	ResourceConfigs = []ResourceConfig{
 		{
 			Name:    EC2ResourceName,
 			Default: true,
-			Global:  false,
 		},
 		{
 			Name:    SGResourceName,
 			Default: true,
-			Global:  false,
 		},
 		{
 			Name:    Route53ResourceName,
 			Default: true,
-			Global:  false,
 		},
 		{
 			Name:    S3ResourceName,
 			Default: true,
-			Global:  false,
 		},
 		{
 			Name:    RDSResourceName,
 			Default: true,
-			Global:  false,
 		},
 		{
 			Name:    IAMResourceName,
 			Default: true,
-			Global:  true,
 		},
 	}
 )

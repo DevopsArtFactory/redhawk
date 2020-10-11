@@ -16,7 +16,16 @@ var NewExecutor = createNewExecutor
 
 // RunExecutor for command line
 func RunExecutor(ctx context.Context, action func(Executor) error) error {
-	b, err := builder.CreateNewBuilder()
+	flags, err := builder.GetFlags()
+	if err != nil {
+		return err
+	}
+
+	if err := builder.ValidateFlags(flags); err != nil {
+		return err
+	}
+
+	b, err := builder.CreateNewBuilder(flags)
 	if err != nil {
 		return err
 	}
@@ -26,7 +35,7 @@ func RunExecutor(ctx context.Context, action func(Executor) error) error {
 		return err
 	}
 
-	executor.Runner.Builder = builder.SetDefault(b)
+	executor.Runner.Builder = b
 
 	//Run function with executor
 	err = action(executor)

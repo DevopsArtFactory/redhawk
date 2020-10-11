@@ -42,7 +42,8 @@ func (c CSVPrinter) SetData(provider string, d []resource.Resource) (Printer, er
 		if err != nil {
 			return nil, err
 		}
-		var tmp []string
+
+		tmp := b
 		policyIndex := 6
 		if resource.GetResource() == constants.S3ResourceName && len(b[policyIndex]) > 0 {
 			decodedPolicy, err := base64.StdEncoding.DecodeString(b[policyIndex])
@@ -51,7 +52,9 @@ func (c CSVPrinter) SetData(provider string, d []resource.Resource) (Printer, er
 			}
 			tmp = b[:policyIndex]
 			tmp[policyIndex] = string(decodedPolicy)
-		} else if resource.GetResource() == constants.Route53ResourceName && len(b[4]) > 0 {
+		}
+
+		if resource.GetResource() == constants.Route53ResourceName && len(b[4]) > 0 {
 			decodedRouteTo, err := base64.StdEncoding.DecodeString(b[4])
 			if err != nil {
 				return nil, err
