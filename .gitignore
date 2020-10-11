@@ -1,3 +1,6 @@
 .vscode
 .idea
 *.csv
+
+hack/bin
+
