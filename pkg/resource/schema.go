@@ -30,12 +30,12 @@ type EC2Resource struct {
 	KeyName            *string    `json:"key_name,omitempty"`
 	IAMInstanceProfile *string    `json:"iam_instance_profile,omitempty"`
 	VpcID              *string    `json:"vpc_id,omitempty"`
-	OwnerID            *string    `json"owner_id,omitempty"`
+	OwnerID            *string    `json:"owner_id,omitempty"`
 	IPv6s              *string    `json:"ipv6,omitempty"`
 	PrivateIPs         *string    `json:"private_ips,omitempty"`
 	SecurityGroupNames *string    `json:"security_group_names,omitempty"`
 	SecurityGroupIDs   *string    `json:"security_group_ids,omitempty"`
-	LaunchTime         *time.Time `json"launch_time,omitempty"`
+	LaunchTime         *time.Time `json:"launch_time,omitempty"`
 }
 
 // Security Group Resource columns
@@ -87,4 +87,29 @@ type RDSResource struct {
 	ParameterGroup   *string    `json:"parameter_group,omitempty"`
 	OptionGroup      *string    `json:"option_group,omitempty"`
 	Created          *time.Time `json:"created,omitempty"`
+}
+
+type IAMResource struct {
+	ResourceType *string `json:"resource_type,omitempty"`
+
+	// IAM User
+	UserName          *string    `json:"user_name,omitempty"`
+	AccessKeyAge      *string    `json:"access_key_age,omitempty"`
+	PasswordAge       *string    `json:"password_age,omitempty"`
+	UserLastActivity  *string    `json:"user_last_activity,omitempty"`
+	MFA               *string    `json:"mfa,omitempty"`
+	GroupCount        *int       `json:"group_count,omitempty"`
+	ConsoleLastLogin  *time.Time `json:"console_last_login,omitempty"`
+	AccessKeyLastUsed *time.Time `json:"access_key_last_usec,omitempty"`
+	UserCreated       *time.Time `json:"created,omitempty"`
+
+	// IAM Group
+	GroupName   *string `json:"group_name,omitempty"`
+	Users       *string `json:"users,omitempty"`
+	Permissions *string `json:"permissions,omitempty"`
+
+	// IAM Role
+	RoleName         *string `json:"role_name,omitempty"`
+	TrustedEntities  *string `json:"trusted_entities,omitempty"`
+	RoleLastActivity *string `json:"role_last_activity,omitempty"`
 }

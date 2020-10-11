@@ -61,7 +61,7 @@ func (r Route53Client) Scan() ([]resource.Resource, error) {
 
 		if rs.AliasTarget != nil {
 			tmp.Alias = aws.Bool(true)
-			logrus.Tracef("DNS route with alias found: %s", rs.AliasTarget.DNSName)
+			logrus.Tracef("DNS route with alias found: %s", *rs.AliasTarget.DNSName)
 			base64RouteTo := base64.StdEncoding.EncodeToString([]byte(*rs.AliasTarget.DNSName))
 
 			logrus.Tracef("DNS route is base64 encoded: %s", base64RouteTo)

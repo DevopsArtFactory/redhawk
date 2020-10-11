@@ -2,8 +2,10 @@ package client
 
 import (
 	"fmt"
-	"github.com/DevopsArtFactory/redhawk/pkg/resource"
+
 	"github.com/aws/aws-sdk-go/aws/credentials"
+
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 )
 
 type Client interface {

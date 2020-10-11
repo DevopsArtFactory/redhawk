@@ -2,15 +2,16 @@ package builder
 
 import (
 	"fmt"
-	"github.com/DevopsArtFactory/redhawk/pkg/constants"
-	"github.com/DevopsArtFactory/redhawk/pkg/tools"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
+	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"github.com/DevopsArtFactory/redhawk/pkg/schema"
+	"github.com/DevopsArtFactory/redhawk/pkg/tools"
 )
 
 type Builder struct {

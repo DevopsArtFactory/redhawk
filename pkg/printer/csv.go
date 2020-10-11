@@ -4,10 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/csv"
 	"fmt"
-	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"os"
 	"time"
 
+	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 	"github.com/DevopsArtFactory/redhawk/pkg/tools"
 )

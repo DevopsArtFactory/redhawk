@@ -96,7 +96,7 @@ func (s S3Client) Scan() ([]resource.Resource, error) {
 		if err != nil {
 			tmp.Policy = nil
 		} else {
-			logrus.Tracef("Bucket policy found: %s", tmp.Bucket)
+			logrus.Tracef("Bucket policy found: %s", *tmp.Bucket)
 			// base64 encoding
 			base64Policy := base64.StdEncoding.EncodeToString([]byte(*policy))
 

@@ -28,11 +28,6 @@ type Record struct {
 }
 
 func New() *Runner {
-	region := viper.GetString("region")
-	if len(region) == 0 {
-		region = constants.DefaultRegion
-	}
-
 	return &Runner{}
 }
 
@@ -40,14 +35,14 @@ func New() *Runner {
 func (r Runner) ScanResources(out io.Writer) error {
 	logrus.Debug("start scanning resources")
 
-	var errors []error
+	//var errors []error
 	ch := make(chan Record)
 	totalCount := 0
 	for _, resource := range r.Builder.Config.Resources {
 		if !resource.Global {
 			totalCount += len(r.Builder.Config.Regions)
 		} else {
-			totalCount += 1
+			totalCount++
 		}
 	}
 	r.TotalCount = totalCount
@@ -116,9 +111,9 @@ func (r Runner) ScanResources(out io.Writer) error {
 			result.Resources = append(result.Resources, record.Data...)
 		}
 
-		if record.Error != nil {
-			errors = append(errors, record.Error)
-		}
+		//if record.Error != nil {
+		//	errors = append(errors, record.Error)
+		//}
 	}
 
 	logrus.Debugf("Completed gathering all data")

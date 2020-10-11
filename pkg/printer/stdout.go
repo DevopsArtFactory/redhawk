@@ -1,15 +1,17 @@
 package printer
 
 import (
-	"github.com/DevopsArtFactory/redhawk/pkg/color"
-	"github.com/DevopsArtFactory/redhawk/pkg/resource"
-	"github.com/DevopsArtFactory/redhawk/pkg/templates"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"html/template"
 	"io"
 	"os"
 	"text/tabwriter"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
+	"github.com/DevopsArtFactory/redhawk/pkg/color"
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
+	"github.com/DevopsArtFactory/redhawk/pkg/templates"
 )
 
 type StdOutPrinter struct {

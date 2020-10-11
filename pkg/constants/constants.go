@@ -29,6 +29,7 @@ const (
 	Route53ResourceName = "route53"
 	S3ResourceName      = "s3"
 	RDSResourceName     = "rds"
+	IAMResourceName     = "iam"
 )
 
 var (
@@ -82,6 +83,11 @@ var (
 			Name:    RDSResourceName,
 			Default: true,
 			Global:  false,
+		},
+		{
+			Name:    IAMResourceName,
+			Default: true,
+			Global:  true,
 		},
 	}
 )

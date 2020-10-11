@@ -2,12 +2,13 @@ package tools
 
 import (
 	"fmt"
-	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"io"
 	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 )
 
 // ClearOsEnv removes all environment variables about AWS

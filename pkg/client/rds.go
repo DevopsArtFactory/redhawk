@@ -1,14 +1,16 @@
 package client
 
 import (
-	"github.com/DevopsArtFactory/redhawk/pkg/constants"
-	"github.com/DevopsArtFactory/redhawk/pkg/resource"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/sirupsen/logrus"
-	"strings"
+
+	"github.com/DevopsArtFactory/redhawk/pkg/constants"
+	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 )
 
 type RDSClient struct {
@@ -98,7 +100,6 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 			logrus.Tracef("Add new rds instance: %s / %s", *tmp.RDSIdentifier, *tmp.Role)
 			result = append(result, tmp)
 		}
-
 	}
 
 	return result, nil
