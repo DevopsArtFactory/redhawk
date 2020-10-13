@@ -5,15 +5,15 @@ accounts:
   # Account : name of account alias
   # Role Arn : Assume role that is used for original account to assume to access the cross account
   - name: prerpod
-    role_arn: arn:client:iam::11111...
+    role_arn: arn:aws:iam::11111...
 
 # Regions to scan
 regions:
   - ap-northeast-2
-#  - us-east-1
-#  - us-east-2
-#  - us-west-1
-#  - us-west-2
+ # - us-east-1
+ # - us-east-2
+ # - us-west-1
+ # - us-west-2
 
 resources:
 #  - name: ec2

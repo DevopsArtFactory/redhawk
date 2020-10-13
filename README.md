@@ -38,7 +38,7 @@ $ source  ~/.bashrc
 Opensource cloud resources audit and management tool
 
 checking all resources in cloud provider
-  scan-resources Scan infrastructure resources in AWS
+  list Scan infrastructure resources in AWS
 
 Other Commands:
   completion     Output shell completion for the given shell (bash or zsh)

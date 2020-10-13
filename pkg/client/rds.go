@@ -1,7 +1,24 @@
+/*
+Copyright 2020 The redhawk Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package client
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -42,6 +59,7 @@ func GetRDSClientFn(sess client.ConfigProvider, region string, creds *credential
 
 // Scan scans all data
 func (r RDSClient) Scan() ([]resource.Resource, error) {
+	var wg sync.WaitGroup
 	var result []resource.Resource
 
 	clusters, err := r.GetRDSClusterList()
@@ -49,8 +67,28 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("RDS clusters found: %d", len(clusters))
-	for _, cluster := range clusters {
+	if len(clusters) == 0 {
+		logrus.Debug("no RDS cluster found")
+		return nil, nil
+	}
+
+	input := make(chan *resource.RDSResource)
+	output := make(chan []resource.Resource)
+	defer close(output)
+
+	go func(input chan *resource.RDSResource, output chan []resource.Resource, wg *sync.WaitGroup) {
+		var ret []resource.Resource
+		for result := range input {
+			if result != nil {
+				ret = append(ret, *result)
+			}
+			wg.Done()
+		}
+
+		output <- ret
+	}(input, output, &wg)
+
+	f := func(cluster *rds.DBCluster, ch chan *resource.RDSResource) {
 		for _, dbMember := range cluster.DBClusterMembers {
 			tmp := resource.RDSResource{
 				ResourceType: aws.String(constants.RDSResourceName),
@@ -68,7 +106,8 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 
 			dbInfo, err := r.GetRDSInfo(*dbMember.DBInstanceIdentifier)
 			if err != nil {
-				return nil, err
+				logrus.Error(err.Error())
+				ch <- nil
 			}
 
 			tmp.AvailabilityZone = dbInfo.AvailabilityZone
@@ -97,10 +136,23 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 			}
 			tmp.OptionGroup = aws.String(strings.Join(optionGroups, constants.DefaultDelimiter))
 
-			logrus.Tracef("Add new rds instance: %s / %s", *tmp.RDSIdentifier, *tmp.Role)
-			result = append(result, tmp)
+			logrus.Debugf("Add new rds instance: %s / %s", *tmp.RDSIdentifier, *tmp.Role)
+
+			ch <- &tmp
 		}
 	}
+
+	logrus.Debugf("RDS clusters found: %d", len(clusters))
+	for _, cluster := range clusters {
+		wg.Add(1)
+		go f(cluster, input)
+	}
+
+	wg.Wait()
+	close(input)
+
+	result = <-output
+	logrus.Debugf("total valid RDS data count: %d", len(result))
 
 	return result, nil
 }

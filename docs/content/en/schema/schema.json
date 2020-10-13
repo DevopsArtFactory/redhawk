@@ -1,0 +1,101 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Config"
+    }
+  ],
+  "type": "object",
+  "definitions": {
+    "Account": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Custom account identifier",
+          "x-intellij-html-description": "Custom account identifier",
+          "default": "\"\""
+        },
+        "role_arn": {
+          "type": "string",
+          "description": "Assume role ARN",
+          "x-intellij-html-description": "Assume role ARN",
+          "default": "\"\""
+        }
+      },
+      "additionalProperties": false,
+      "preferredOrder": [
+        "name",
+        "role_arn"
+      ],
+      "description": "Configuration for assume account for AWS",
+      "x-intellij-html-description": "Configuration for assume account for AWS"
+    },
+    "Config": {
+      "properties": {
+        "accounts": {
+          "items": {
+            "$ref": "#/definitions/Account"
+          },
+          "type": "array",
+          "description": "Multi accounts name and role for AWS Provider",
+          "x-intellij-html-description": "Multi accounts name and role for AWS Provider"
+        },
+        "provider": {
+          "type": "string",
+          "description": "Resource Provider like AWS, GCP etc...",
+          "x-intellij-html-description": "Resource Provider like AWS, GCP etc...",
+          "default": "\"\""
+        },
+        "regions": {
+          "items": {
+            "type": "string",
+            "default": "\"\""
+          },
+          "type": "array",
+          "description": "List of regions. Default region of provider will be applied if no region specified",
+          "x-intellij-html-description": "List of regions. Default region of provider will be applied if no region specified",
+          "default": "[]"
+        },
+        "resources": {
+          "items": {
+            "$ref": "#/definitions/Resource"
+          },
+          "type": "array",
+          "description": "List of resources. All resources will be applied if no resources specified",
+          "x-intellij-html-description": "List of resources. All resources will be applied if no resources specified"
+        }
+      },
+      "additionalProperties": false,
+      "preferredOrder": [
+        "provider",
+        "accounts",
+        "regions",
+        "resources"
+      ],
+      "description": "Configuration for redhawk",
+      "x-intellij-html-description": "Configuration for redhawk"
+    },
+    "Resource": {
+      "properties": {
+        "global": {
+          "type": "boolean",
+          "description": "Whether or not it is a global resource or not",
+          "x-intellij-html-description": "Whether or not it is a global resource or not",
+          "default": "false"
+        },
+        "name": {
+          "type": "string",
+          "description": "Resource name",
+          "x-intellij-html-description": "Resource name",
+          "default": "\"\""
+        }
+      },
+      "additionalProperties": false,
+      "preferredOrder": [
+        "name",
+        "global"
+      ],
+      "description": "configuration with detailed conditions",
+      "x-intellij-html-description": "configuration with detailed conditions"
+    }
+  }
+}

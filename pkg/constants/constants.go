@@ -1,3 +1,19 @@
+/*
+Copyright 2020 The redhawk Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package constants
 
 import (
@@ -8,7 +24,7 @@ import (
 
 const (
 	// DefaultLogLevel is the default global verbosity
-	DefaultLogLevel = logrus.WarnLevel
+	DefaultLogLevel = logrus.InfoLevel
 
 	// DefaultRegion is the default region id
 	DefaultRegion = "us-east-1"
@@ -24,6 +40,12 @@ const (
 
 	// DefaultDelimiter is a default delimiter for csv output
 	DefaultDelimiter = "|"
+
+	// DefaultRegionVariable is the default region id
+	DefaultRegionVariable = "AWS_DEFAULT_REGION"
+
+	// StringText is "string"
+	StringText = "string"
 
 	// Resource Name Constants
 	// After add resource here, you have to setup `ResourceConfig` in the var section
@@ -73,6 +95,12 @@ var (
 		RDSResourceName:     false,
 		IAMResourceName:     true,
 	}
+
+	// AWSCredentialsPath is the file path of aws credentials
+	AWSCredentialsPath = HomeDir() + "/.aws/credentials"
+
+	// AWSConfigPath is the file path of aws config
+	AWSConfigPath = HomeDir() + "/.aws/config"
 
 	ResourceConfigs = []ResourceConfig{
 		{

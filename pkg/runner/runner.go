@@ -1,10 +1,26 @@
+/*
+Copyright 2020 The redhawk Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package runner
 
 import (
 	"io"
+	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/builder"
 	"github.com/DevopsArtFactory/redhawk/pkg/client"
@@ -32,11 +48,12 @@ func New() *Runner {
 	return &Runner{}
 }
 
-// ScanResources retrieves resources in AWS
-func (r Runner) ScanResources(out io.Writer) error {
+// List retrieves resources in AWS
+func (r Runner) List(out io.Writer) error {
+	t := time.Now()
 	logrus.Info("start scanning resources")
 
-	//var errors []error
+	var errors []error
 	ch := make(chan Record)
 	totalCount := 0
 	for _, resource := range r.Builder.Config.Resources {
@@ -113,31 +130,44 @@ func (r Runner) ScanResources(out io.Writer) error {
 			result.Resources = append(result.Resources, record.Data...)
 		}
 
-		//if record.Error != nil {
-		//	errors = append(errors, record.Error)
-		//}
+		if record.Error != nil {
+			errors = append(errors, record.Error)
+		}
 	}
-
 	logrus.Debugf("Completed gathering all data")
 
-	outputFormat := viper.GetString("output")
-	if err := tools.CheckValidFormat(outputFormat); err != nil {
+	logrus.Debugf("Check format validation: %s", r.Builder.Flags.Output)
+	if err := tools.CheckValidFormat(r.Builder.Flags.Output); err != nil {
 		return err
 	}
 
-	printer, err := printer.SelectPrinter(outputFormat)
+	logrus.Debugf("Create a printer for output: %s", r.Builder.Flags.Output)
+	printer, err := printer.SelectPrinter(r.Builder.Flags.Output)
 	if err != nil {
 		return err
 	}
+	logrus.Debug("Printer is successfully created")
 
+	logrus.Debugf("Set a number of data for printer: %d", len(result.Resources))
 	pr, err := printer.SetData(result.Provider, result.Resources)
 	if err != nil {
 		return err
 	}
+	logrus.Debug("Data setting for printer is done")
 
+	logrus.Debug("Start printer to print the result")
 	if err := pr.Print(); err != nil {
 		return err
 	}
+
+	if len(errors) > 0 && (logrus.GetLevel() == logrus.DebugLevel && logrus.GetLevel() == logrus.TraceLevel) {
+		for _, err := range errors {
+			logrus.Error(err.Error())
+		}
+	}
+
+	end := time.Now()
+	logrus.Infof("Scan time: %f sec", end.Sub(t).Seconds())
 
 	return nil
 }

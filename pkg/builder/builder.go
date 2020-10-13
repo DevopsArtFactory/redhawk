@@ -1,17 +1,41 @@
+/*
+Copyright 2020 The redhawk Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package builder
 
 import (
+	"errors"
 	"fmt"
+	"html/template"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v2"
 
+	"github.com/DevopsArtFactory/redhawk/pkg/client"
+	"github.com/DevopsArtFactory/redhawk/pkg/color"
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 	"github.com/DevopsArtFactory/redhawk/pkg/schema"
+	"github.com/DevopsArtFactory/redhawk/pkg/templates"
 	"github.com/DevopsArtFactory/redhawk/pkg/tools"
 )
 
@@ -31,6 +55,10 @@ type Flags struct {
 
 // ValidateFlags checks validation of flags
 func ValidateFlags(flags Flags) error {
+	if len(flags.Resources) == 0 {
+		return printHelp(flags.Region)
+	}
+
 	if !tools.IsStringInArray(flags.Output, constants.ValidFormats) {
 		return fmt.Errorf("output format is not supported: %s", flags.Output)
 	}
@@ -96,14 +124,9 @@ func SetDefault(builder *Builder) *Builder {
 	if builder.Flags.All {
 		builder.Config.Regions = constants.AllAWSRegions
 		logrus.Debugf("all regions will be applied: [%s]", strings.Join(constants.AllAWSRegions, ","))
-	} else {
-		if len(builder.Flags.Region) > 0 {
-			builder.Config.Regions = []string{builder.Flags.Region}
-			logrus.Debugf("region will be applied: %s", builder.Flags.Region)
-		} else if len(builder.Config.Regions) == 0 {
-			builder.Config.Regions = []string{constants.DefaultRegion}
-			logrus.Debugf("default region will be applied: %s", constants.DefaultRegion)
-		}
+	} else if len(builder.Flags.Region) > 0 {
+		builder.Config.Regions = []string{builder.Flags.Region}
+		logrus.Debugf("region will be applied: %s", builder.Flags.Region)
 	}
 
 	if len(builder.Flags.Resources) > 0 {
@@ -169,5 +192,108 @@ func GetFlags() (Flags, error) {
 		}
 	}
 
+	// if region is not specified, then apply default region
+	if len(flags.Region) == 0 {
+		defaultRegion, err := getDefaultRegion("default")
+		if err != nil {
+			flags.Region = constants.DefaultRegion
+		}
+
+		logrus.Debugf("default region will be applied: %s", defaultRegion)
+		flags.Region = defaultRegion
+	}
+
 	return flags, nil
+}
+
+// getDefaultRegion gets default region with env or configuration file
+func getDefaultRegion(profile string) (string, error) {
+	if len(os.Getenv(constants.DefaultRegionVariable)) > 0 {
+		return os.Getenv(constants.DefaultRegionVariable), nil
+	}
+
+	functions := []func() (*ini.File, error){
+		ReadAWSCredentials,
+		ReadAWSConfig,
+	}
+
+	for _, f := range functions {
+		cfg, err := f()
+		if err != nil {
+			return constants.EmptyString, err
+		}
+
+		section, err := cfg.GetSection(profile)
+		if err != nil {
+			return constants.EmptyString, err
+		}
+
+		if _, err := section.GetKey("region"); err == nil && len(section.Key("region").String()) > 0 {
+			return section.Key("region").String(), nil
+		}
+	}
+	return constants.EmptyString, errors.New("no aws region configuration exists")
+}
+
+// ReadAWSCredentials parse an aws credentials
+func ReadAWSCredentials() (*ini.File, error) {
+	if !tools.FileExists(constants.AWSCredentialsPath) {
+		return ReadAWSConfig()
+	}
+
+	cfg, err := ini.Load(constants.AWSCredentialsPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+// ReadAWSConfig parse an aws configuration
+func ReadAWSConfig() (*ini.File, error) {
+	if !tools.FileExists(constants.AWSConfigPath) {
+		return nil, fmt.Errorf("no aws configuration file exists in $HOME/%s", constants.AWSConfigPath)
+	}
+
+	cfg, err := ini.Load(constants.AWSConfigPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+// printHelp shows the basic usage of redhawk
+func printHelp(region string) error {
+	sts, err := client.NewSTSClient(region)
+	if err != nil {
+		return err
+	}
+
+	account, err := sts.CheckWhoIam()
+	if err != nil {
+		return err
+	}
+
+	var data = struct {
+		Account string
+	}{
+		Account: *account,
+	}
+
+	funcMap := template.FuncMap{
+		"decorate": color.DecorateAttr,
+	}
+
+	// Template for scan result
+	w := tabwriter.NewWriter(os.Stdout, 0, 5, 3, ' ', tabwriter.TabIndent)
+	t := template.Must(template.New("How to use").Funcs(funcMap).Parse(templates.HelperTemplates))
+
+	err = t.Execute(w, data)
+	if err != nil {
+		return err
+	}
+	w.Flush()
+
+	return errors.New("please check command")
 }

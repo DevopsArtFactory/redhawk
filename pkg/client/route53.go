@@ -1,8 +1,25 @@
+/*
+Copyright 2020 The redhawk Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package client
 
 import (
 	"encoding/base64"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -43,6 +60,7 @@ func GetRoute53ClientFn(sess client.ConfigProvider, region string, creds *creden
 
 // Scan scans all data
 func (r Route53Client) Scan() ([]resource.Resource, error) {
+	var wg sync.WaitGroup
 	var result []resource.Resource
 
 	recordSets, err := r.GetRoute53List()
@@ -50,8 +68,26 @@ func (r Route53Client) Scan() ([]resource.Resource, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("Record sets found: %d", len(recordSets))
-	for _, rs := range recordSets {
+	if len(recordSets) == 0 {
+		logrus.Debug("no record set found")
+		return nil, nil
+	}
+
+	input := make(chan resource.Route53Resource)
+	output := make(chan []resource.Resource)
+	defer close(output)
+
+	go func(input chan resource.Route53Resource, output chan []resource.Resource, wg *sync.WaitGroup) {
+		var ret []resource.Resource
+		for result := range input {
+			ret = append(ret, result)
+			wg.Done()
+		}
+
+		output <- ret
+	}(input, output, &wg)
+
+	f := func(rs *route53.ResourceRecordSet, ch chan resource.Route53Resource) {
 		tmp := resource.Route53Resource{
 			ResourceType: aws.String(constants.Route53ResourceName),
 		}
@@ -84,8 +120,20 @@ func (r Route53Client) Scan() ([]resource.Resource, error) {
 
 		tmp.TTL = rs.TTL
 
-		result = append(result, tmp)
+		ch <- tmp
 	}
+
+	logrus.Debugf("Record sets found: %d", len(recordSets))
+	for _, rs := range recordSets {
+		wg.Add(1)
+		go f(rs, input)
+	}
+
+	wg.Wait()
+	close(input)
+
+	result = <-output
+	logrus.Debugf("total valid Route53 data count: %d", len(result))
 
 	return result, nil
 }

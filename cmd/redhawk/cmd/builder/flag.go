@@ -1,3 +1,19 @@
+/*
+Copyright 2020 The redhawk Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package builder
 
 import (
@@ -35,7 +51,7 @@ var FlagRegistry = []Flag{
 		Value:         aws.String(constants.EmptyString),
 		DefValue:      constants.EmptyString,
 		FlagAddMethod: "StringVar",
-		DefinedOn:     []string{"scan-resources"},
+		DefinedOn:     []string{"list"},
 	},
 	{
 		Name:          "config",
@@ -43,7 +59,7 @@ var FlagRegistry = []Flag{
 		Value:         aws.String(constants.EmptyString),
 		DefValue:      constants.EmptyString,
 		FlagAddMethod: "StringVar",
-		DefinedOn:     []string{"scan-resources"},
+		DefinedOn:     []string{"list"},
 	},
 	{
 		Name:          "detail",
@@ -51,7 +67,7 @@ var FlagRegistry = []Flag{
 		Value:         aws.Bool(false),
 		DefValue:      false,
 		FlagAddMethod: "BoolVar",
-		DefinedOn:     []string{"scan-resources"},
+		DefinedOn:     []string{"list"},
 	},
 	{
 		Name:          "all",
@@ -60,15 +76,15 @@ var FlagRegistry = []Flag{
 		Shorthand:     "A",
 		DefValue:      false,
 		FlagAddMethod: "BoolVar",
-		DefinedOn:     []string{"scan-resources"},
+		DefinedOn:     []string{"list"},
 	},
 	{
 		Name:          "resources",
-		Usage:         "Resource list of provider for dynamic search(Delimiter: comma)",
+		Usage:         "[Required]Resource list of provider for dynamic search(Delimiter: comma)",
 		Value:         aws.String(constants.EmptyString),
 		DefValue:      constants.EmptyString,
 		FlagAddMethod: "StringVar",
-		DefinedOn:     []string{"scan-resources"},
+		DefinedOn:     []string{"list"},
 	},
 	{
 		Name:          "output",
@@ -77,7 +93,7 @@ var FlagRegistry = []Flag{
 		Value:         aws.String(constants.DefaultOutputFormat),
 		DefValue:      constants.DefaultOutputFormat,
 		FlagAddMethod: "StringVar",
-		DefinedOn:     []string{"scan-resources"},
+		DefinedOn:     []string{"list"},
 	},
 }
 

@@ -1,7 +1,24 @@
+/*
+Copyright 2020 The redhawk Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package client
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -25,6 +42,7 @@ func (e EC2Client) GetResourceName() string {
 
 // Scan scans all data
 func (e EC2Client) Scan() ([]resource.Resource, error) {
+	var wg sync.WaitGroup
 	var result []resource.Resource
 
 	logrus.Debugf("Start to scan all ec2 instances")
@@ -33,13 +51,33 @@ func (e EC2Client) Scan() ([]resource.Resource, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("Instances found: %d", len(reservations))
-	for _, reservation := range reservations {
+	if len(reservations) == 0 {
+		logrus.Debug("no ec2 instance found")
+		return nil, nil
+	}
+
+	input := make(chan resource.EC2Resource)
+	output := make(chan []resource.Resource)
+	defer close(output)
+
+	go func(input chan resource.EC2Resource, output chan []resource.Resource, wg *sync.WaitGroup) {
+		var ret []resource.Resource
+		for result := range input {
+			ret = append(ret, result)
+			wg.Done()
+		}
+
+		output <- ret
+	}(input, output, &wg)
+
+	f := func(reservation *ec2.Reservation, ch chan resource.EC2Resource) {
 		tmp := resource.EC2Resource{
 			ResourceType: aws.String(constants.EC2ResourceName),
 		}
 
+		logrus.Tracef("Possible valid instances: %d", len(reservation.Instances))
 		for _, instance := range reservation.Instances {
+			logrus.Tracef("Gathering information about instance: %s", *instance.InstanceId)
 			tmp.InstanceID = instance.InstanceId
 			tmp.InstanceStatus = instance.State.Name
 			tmp.InstanceType = instance.InstanceType
@@ -94,8 +132,20 @@ func (e EC2Client) Scan() ([]resource.Resource, error) {
 		}
 
 		logrus.Tracef("Instance is added: %s", *tmp.InstanceID)
-		result = append(result, tmp)
+		ch <- tmp
 	}
+
+	logrus.Debugf("Instances found: %d", len(reservations))
+	for _, reservation := range reservations {
+		wg.Add(1)
+		go f(reservation, input)
+	}
+
+	wg.Wait()
+	close(input)
+
+	result = <-output
+	logrus.Debugf("total valid EC2 data count: %d", len(result))
 
 	return result, nil
 }

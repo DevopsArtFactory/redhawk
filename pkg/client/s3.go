@@ -1,8 +1,25 @@
+/*
+Copyright 2020 The redhawk Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package client
 
 import (
 	"encoding/base64"
 	"fmt"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -56,6 +73,7 @@ func GetS3ClientFn(sess client.ConfigProvider, region string, creds *credentials
 // Scan scans all data
 func (s S3Client) Scan() ([]resource.Resource, error) {
 	var result []resource.Resource
+	var wg sync.WaitGroup
 
 	logrus.Debug("Start scanning all buckets in the account")
 	buckets, err := s.GetBucketList()
@@ -63,15 +81,36 @@ func (s S3Client) Scan() ([]resource.Resource, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("Buckets found: %d", len(buckets))
-	for _, bucket := range buckets {
+	if len(buckets) == 0 {
+		logrus.Debug("no bucket found")
+		return nil, nil
+	}
+
+	input := make(chan *resource.S3Resource)
+	output := make(chan []resource.Resource)
+	defer close(output)
+
+	go func(input chan *resource.S3Resource, output chan []resource.Resource, wg *sync.WaitGroup) {
+		var ret []resource.Resource
+		for result := range input {
+			if result != nil {
+				ret = append(ret, *result)
+			}
+			wg.Done()
+		}
+
+		output <- ret
+	}(input, output, &wg)
+
+	f := func(bucket *s3.Bucket, ch chan *resource.S3Resource) {
 		tmp := resource.S3Resource{
 			ResourceType: aws.String(constants.S3ResourceName),
 		}
 
 		location, err := s.GetBucketLocation(*bucket.Name)
 		if err != nil {
-			continue
+			ch <- nil
+			return
 		}
 
 		if location == nil {
@@ -81,7 +120,8 @@ func (s S3Client) Scan() ([]resource.Resource, error) {
 
 		logging, err := s.GetBucketLogging(*bucket.Name)
 		if err != nil {
-			continue
+			ch <- nil
+			return
 		}
 
 		tmp.LoggingEnabled = aws.Bool(false)
@@ -106,8 +146,21 @@ func (s S3Client) Scan() ([]resource.Resource, error) {
 		}
 
 		logrus.Tracef("new bucket is added: %s / %s", *tmp.Bucket, *tmp.Region)
-		result = append(result, tmp)
+
+		ch <- &tmp
 	}
+
+	logrus.Debugf("Buckets found: %d", len(buckets))
+	for _, bucket := range buckets {
+		wg.Add(1)
+		go f(bucket, input)
+	}
+
+	wg.Wait()
+	close(input)
+
+	result = <-output
+	logrus.Debugf("total valid s3 data count: %d", len(result))
 
 	if len(result) == 0 {
 		return nil, fmt.Errorf("no bucket exists in the region")
