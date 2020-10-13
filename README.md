@@ -8,14 +8,26 @@ then you could use redhawk to easily get list of all resources. For better secur
 ## Install
 * macOS user
 ```bash
+# Using cURL
+curl -Lo redhawk https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releasees/latest/redhawk-linux-amd64
+sudo install redhawk /usr/local/bin/
+redhawk version
+
+# Using brew
+brew tap devopsartfactory/devopsart
+brew install redhawk
+redhawk version
 ```
 
 * Linux user
 ```bash
+curl -Lo redhawk https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releasees/latest/redhawk-linux-amd64
+sudo install redhawk /usr/local/bin/
+redhawk version
 ```
 
 * Windows user
-  - file: 
+  - file: https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releasees/latest/redhawk-windows-amd64.exe
   - Simply download it and place it in your PATH as redhawk.exe.
   
   
@@ -38,11 +50,11 @@ $ source  ~/.bashrc
 Opensource cloud resources audit and management tool
 
 checking all resources in cloud provider
-  list Scan infrastructure resources in AWS
+  list        list infrastructure resources in AWS
 
 Other Commands:
-  completion     Output shell completion for the given shell (bash or zsh)
-  version        Print the version information
+  completion  Output shell completion for the given shell (bash or zsh)
+  version     Print the version information
 
 Usage:
   redhawk [flags] [options]

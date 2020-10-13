@@ -40,6 +40,7 @@ Simply download it and add it to your PATH. Or, copy+paste this command in your 
 ```
 curl -Lo redhawk https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releasees/latest/redhawk-linux-amd64
 sudo install redhawk /usr/local/bin/
+redhawk version
 ```
 
 ### Windows
