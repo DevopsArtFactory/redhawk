@@ -14,7 +14,7 @@ landing:
   textColor:
   spaceBetweenTitleText: 25
   buttons:
-    - link: docs/gettingstarted/quickstart
+    - link: docs/introduction/
       text: GET STARTED
       color: primary
     - link: https://github.com/DevopsArtFactory/redhawk
