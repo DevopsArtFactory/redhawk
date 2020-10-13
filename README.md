@@ -9,7 +9,7 @@ then you could use redhawk to easily get list of all resources. For better secur
 * macOS user
 ```bash
 # Using cURL
-curl -Lo redhawk https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releasees/latest/redhawk-linux-amd64
+curl -Lo redhawk https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releases/latest/redhawk-darwin-amd64
 sudo install redhawk /usr/local/bin/
 redhawk version
 
@@ -21,13 +21,13 @@ redhawk version
 
 * Linux user
 ```bash
-curl -Lo redhawk https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releasees/latest/redhawk-linux-amd64
+curl -Lo redhawk https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releases/latest/redhawk-linux-amd64
 sudo install redhawk /usr/local/bin/
 redhawk version
 ```
 
 * Windows user
-  - file: https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releasees/latest/redhawk-windows-amd64.exe
+  - file: https://devopsartfactory.s3.ap-northeast-2.amazonaws.com/redhawk/releases/latest/redhawk-windows-amd64.exe
   - Simply download it and place it in your PATH as redhawk.exe.
   
   
