@@ -400,6 +400,10 @@ func (i IAMClient) ScanUser(userGroupMap map[string][]string) ([]resource.Resour
 				return
 			}
 
+			if lastUsed.LastUsedDate == nil {
+				continue
+			}
+
 			if lastlyUsed == nil || lastUsed.LastUsedDate.Sub(*lastlyUsed) > 0 {
 				lastlyUsed = lastUsed.LastUsedDate
 			}
