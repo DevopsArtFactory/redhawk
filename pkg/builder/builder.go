@@ -193,7 +193,7 @@ func GetFlags() (Flags, error) {
 	}
 
 	// if region is not specified, then apply default region
-	if len(flags.Region) == 0 {
+	if len(flags.Region) == 0 && !flags.All {
 		defaultRegion, err := getDefaultRegion("default")
 		if err != nil {
 			flags.Region = constants.DefaultRegion

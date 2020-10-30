@@ -106,11 +106,20 @@ func Formatting(i interface{}) interface{} {
 	switch reflect.TypeOf(i).String() {
 	case "*time.Time":
 		if i.(*time.Time) == nil {
-			return constants.EmptyString
+			return "-"
 		}
+		return i.(*time.Time).Format("2006-01-02 15:04:05")
 	case "*string":
 		if i.(*string) == nil {
-			return constants.EmptyString
+			return "-"
+		}
+	case "*int":
+		if i.(*int) == nil {
+			return "-"
+		}
+	case "*int64":
+		if i.(*int64) == nil {
+			return "-"
 		}
 	}
 
