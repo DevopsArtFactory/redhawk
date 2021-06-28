@@ -17,14 +17,14 @@ limitations under the License.
 package client
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/sirupsen/logrus"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
@@ -33,7 +33,8 @@ import (
 
 type S3Client struct {
 	Resource string
-	Client   *s3.S3
+	Client   *s3.Client
+	Alias    *string
 }
 
 type BucketPolicy struct {
@@ -49,29 +50,25 @@ type Statement struct {
 }
 
 // GetResourceName returns resource name of client
-func (s S3Client) GetResourceName() string {
+func (s *S3Client) GetResourceName() string {
 	return s.Resource
 }
 
 // NewS3Client creates S3Client
-func NewS3Client(helper Helper) (Client, error) {
-	session := GetAwsSession()
+func NewS3Client(cfg aws.Config, helper Helper) (Client, error) {
 	return &S3Client{
 		Resource: constants.S3ResourceName,
-		Client:   GetS3ClientFn(session, helper.Region, helper.Credentials),
+		Client:   GetS3ClientFn(cfg),
 	}, nil
 }
 
 // GetS3ClientFn creates s3 client
-func GetS3ClientFn(sess client.ConfigProvider, region string, creds *credentials.Credentials) *s3.S3 {
-	if creds == nil {
-		return s3.New(sess, &aws.Config{Region: aws.String(region)})
-	}
-	return s3.New(sess, &aws.Config{Region: aws.String(region), Credentials: creds})
+func GetS3ClientFn(cfg aws.Config) *s3.Client {
+	return s3.NewFromConfig(cfg)
 }
 
 // Scan scans all data
-func (s S3Client) Scan() ([]resource.Resource, error) {
+func (s *S3Client) Scan() ([]resource.Resource, error) {
 	var result []resource.Resource
 	var wg sync.WaitGroup
 
@@ -102,7 +99,7 @@ func (s S3Client) Scan() ([]resource.Resource, error) {
 		output <- ret
 	}(input, output, &wg)
 
-	f := func(bucket *s3.Bucket, ch chan *resource.S3Resource) {
+	f := func(bucket types.Bucket, ch chan *resource.S3Resource) {
 		tmp := resource.S3Resource{
 			ResourceType: aws.String(constants.S3ResourceName),
 		}
@@ -170,8 +167,8 @@ func (s S3Client) Scan() ([]resource.Resource, error) {
 }
 
 // GetSGList returns all security group list in the account
-func (s S3Client) GetBucketList() ([]*s3.Bucket, error) {
-	result, err := s.Client.ListBuckets(&s3.ListBucketsInput{})
+func (s *S3Client) GetBucketList() ([]types.Bucket, error) {
+	result, err := s.Client.ListBuckets(context.TODO(), &s3.ListBucketsInput{})
 	if err != nil {
 		return nil, err
 	}
@@ -180,20 +177,20 @@ func (s S3Client) GetBucketList() ([]*s3.Bucket, error) {
 }
 
 // GetBucketLocation returns region of bucket
-func (s S3Client) GetBucketLocation(bucket string) (*string, error) {
-	result, err := s.Client.GetBucketLocation(&s3.GetBucketLocationInput{
+func (s *S3Client) GetBucketLocation(bucket string) (*string, error) {
+	result, err := s.Client.GetBucketLocation(context.TODO(), &s3.GetBucketLocationInput{
 		Bucket: aws.String(bucket),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return result.LocationConstraint, nil
+	return aws.String(string(result.LocationConstraint)), nil
 }
 
 // GetBucketPolicy returns a bucket policy
-func (s S3Client) GetBucketPolicy(bucket string) (*string, error) {
-	result, err := s.Client.GetBucketPolicy(&s3.GetBucketPolicyInput{
+func (s *S3Client) GetBucketPolicy(bucket string) (*string, error) {
+	result, err := s.Client.GetBucketPolicy(context.TODO(), &s3.GetBucketPolicyInput{
 		Bucket: aws.String(bucket),
 	})
 	if err != nil {
@@ -204,8 +201,8 @@ func (s S3Client) GetBucketPolicy(bucket string) (*string, error) {
 }
 
 // GetBucketLogging returns a bucket logging configuration
-func (s S3Client) GetBucketLogging(bucket string) (*s3.LoggingEnabled, error) {
-	result, err := s.Client.GetBucketLogging(&s3.GetBucketLoggingInput{
+func (s *S3Client) GetBucketLogging(bucket string) (*types.LoggingEnabled, error) {
+	result, err := s.Client.GetBucketLogging(context.TODO(), &s3.GetBucketLoggingInput{
 		Bucket: aws.String(bucket),
 	})
 	if err != nil {
@@ -213,4 +210,9 @@ func (s S3Client) GetBucketLogging(bucket string) (*s3.LoggingEnabled, error) {
 	}
 
 	return result.LoggingEnabled, nil
+}
+
+// SetAlias sets alias
+func (s *S3Client) SetAlias(alias *string) {
+	s.Alias = alias
 }

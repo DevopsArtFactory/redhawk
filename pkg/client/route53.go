@@ -17,14 +17,14 @@ limitations under the License.
 package client
 
 import (
+	"context"
 	"encoding/base64"
 	"strings"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/sirupsen/logrus"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
@@ -33,33 +33,30 @@ import (
 
 type Route53Client struct {
 	Resource string
-	Client   *route53.Route53
+	Client   *route53.Client
+	Alias    *string
 }
 
 // GetResourceName returns resource name of client
-func (r Route53Client) GetResourceName() string {
+func (r *Route53Client) GetResourceName() string {
 	return r.Resource
 }
 
 // NewRoute53Client creates a Route53Client
-func NewRoute53Client(helper Helper) (Client, error) {
-	session := GetAwsSession()
+func NewRoute53Client(cfg aws.Config, _ Helper) (Client, error) {
 	return &Route53Client{
 		Resource: constants.Route53ResourceName,
-		Client:   GetRoute53ClientFn(session, helper.Region, helper.Credentials),
+		Client:   GetRoute53ClientFn(cfg),
 	}, nil
 }
 
 // GetRoute53ClientFn creates route53 client
-func GetRoute53ClientFn(sess client.ConfigProvider, region string, creds *credentials.Credentials) *route53.Route53 {
-	if creds == nil {
-		return route53.New(sess, &aws.Config{Region: aws.String(region)})
-	}
-	return route53.New(sess, &aws.Config{Region: aws.String(region), Credentials: creds})
+func GetRoute53ClientFn(cfg aws.Config) *route53.Client {
+	return route53.NewFromConfig(cfg)
 }
 
 // Scan scans all data
-func (r Route53Client) Scan() ([]resource.Resource, error) {
+func (r *Route53Client) Scan() ([]resource.Resource, error) {
 	var wg sync.WaitGroup
 	var result []resource.Resource
 
@@ -87,13 +84,13 @@ func (r Route53Client) Scan() ([]resource.Resource, error) {
 		output <- ret
 	}(input, output, &wg)
 
-	f := func(rs *route53.ResourceRecordSet, ch chan resource.Route53Resource) {
+	f := func(rs types.ResourceRecordSet, ch chan resource.Route53Resource) {
 		tmp := resource.Route53Resource{
 			ResourceType: aws.String(constants.Route53ResourceName),
 		}
 
 		tmp.Name = rs.Name
-		tmp.Type = rs.Type
+		tmp.Type = aws.String(string(rs.Type))
 
 		if rs.AliasTarget != nil {
 			tmp.Alias = aws.Bool(true)
@@ -139,15 +136,15 @@ func (r Route53Client) Scan() ([]resource.Resource, error) {
 }
 
 // GetRoute53List get all record set in the account
-func (r Route53Client) GetRoute53List() ([]*route53.ResourceRecordSet, error) {
+func (r *Route53Client) GetRoute53List() ([]types.ResourceRecordSet, error) {
 	hostedZones, err := r.GetRoute53HostedZones()
 	if err != nil {
 		return nil, err
 	}
 
-	var ret []*route53.ResourceRecordSet
+	var ret []types.ResourceRecordSet
 	for _, hz := range hostedZones {
-		result, err := r.Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+		result, err := r.Client.ListResourceRecordSets(context.TODO(), &route53.ListResourceRecordSetsInput{
 			HostedZoneId: hz.Id,
 		})
 
@@ -161,11 +158,16 @@ func (r Route53Client) GetRoute53List() ([]*route53.ResourceRecordSet, error) {
 }
 
 // GetRoute53HostedZones get all hosted zones in the account
-func (r Route53Client) GetRoute53HostedZones() ([]*route53.HostedZone, error) {
-	result, err := r.Client.ListHostedZones(&route53.ListHostedZonesInput{})
+func (r *Route53Client) GetRoute53HostedZones() ([]types.HostedZone, error) {
+	result, err := r.Client.ListHostedZones(context.TODO(), &route53.ListHostedZonesInput{})
 	if err != nil {
 		return nil, err
 	}
 
 	return result.HostedZones, nil
+}
+
+// SetAlias sets alias
+func (r *Route53Client) SetAlias(alias *string) {
+	r.Alias = alias
 }

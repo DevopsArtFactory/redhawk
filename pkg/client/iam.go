@@ -17,16 +17,16 @@ limitations under the License.
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/sirupsen/logrus"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
@@ -36,7 +36,8 @@ import (
 
 type IAMClient struct {
 	Resource string
-	Client   *iam.IAM
+	Alias    *string
+	Client   *iam.Client
 }
 
 type PolicyDocument struct {
@@ -61,24 +62,20 @@ func (i IAMClient) GetResourceName() string {
 }
 
 // NewIAMClient creates IAMClient
-func NewIAMClient(helper Helper) (Client, error) {
-	session := GetAwsSession()
+func NewIAMClient(cfg aws.Config, _ Helper) (Client, error) {
 	return &IAMClient{
 		Resource: constants.IAMResourceName,
-		Client:   GetIAMClientFn(session, helper.Region, helper.Credentials),
+		Client:   GetIAMClientFn(cfg),
 	}, nil
 }
 
 // GetIAMClientFn creates iam client
-func GetIAMClientFn(sess client.ConfigProvider, region string, creds *credentials.Credentials) *iam.IAM {
-	if creds == nil {
-		return iam.New(sess, &aws.Config{Region: aws.String(region)})
-	}
-	return iam.New(sess, &aws.Config{Region: aws.String(region), Credentials: creds})
+func GetIAMClientFn(cfg aws.Config) *iam.Client {
+	return iam.NewFromConfig(cfg)
 }
 
 // Scan scans all data
-func (i IAMClient) Scan() ([]resource.Resource, error) {
+func (i *IAMClient) Scan() ([]resource.Resource, error) {
 	var result []resource.Resource
 
 	groupData, userMapList, err := i.ScanGroup()
@@ -112,10 +109,10 @@ func (i IAMClient) Scan() ([]resource.Resource, error) {
 }
 
 // GetUserList returns all IAM User list
-func (i IAMClient) GetUserList() ([]*iam.User, error) {
+func (i *IAMClient) GetUserList() ([]types.User, error) {
 	input := &iam.ListUsersInput{}
 
-	result, err := i.Client.ListUsers(input)
+	result, err := i.Client.ListUsers(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -124,10 +121,10 @@ func (i IAMClient) GetUserList() ([]*iam.User, error) {
 }
 
 // GetGroupList returns all IAM group list
-func (i IAMClient) GetGroupList() ([]*iam.Group, error) {
+func (i *IAMClient) GetGroupList() ([]types.Group, error) {
 	input := &iam.ListGroupsInput{}
 
-	result, err := i.Client.ListGroups(input)
+	result, err := i.Client.ListGroups(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -136,10 +133,10 @@ func (i IAMClient) GetGroupList() ([]*iam.Group, error) {
 }
 
 // GetRoleList returns all IAM role list
-func (i IAMClient) GetRoleList() ([]*iam.Role, error) {
+func (i *IAMClient) GetRoleList() ([]types.Role, error) {
 	input := &iam.ListRolesInput{}
 
-	result, err := i.Client.ListRoles(input)
+	result, err := i.Client.ListRoles(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -148,12 +145,12 @@ func (i IAMClient) GetRoleList() ([]*iam.Role, error) {
 }
 
 // GetAccessKeys returns all access keys of user
-func (i IAMClient) GetAccessKeys(user string) ([]*iam.AccessKeyMetadata, error) {
+func (i IAMClient) GetAccessKeys(user string) ([]types.AccessKeyMetadata, error) {
 	input := &iam.ListAccessKeysInput{
 		UserName: aws.String(user),
 	}
 
-	result, err := i.Client.ListAccessKeys(input)
+	result, err := i.Client.ListAccessKeys(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -162,12 +159,12 @@ func (i IAMClient) GetAccessKeys(user string) ([]*iam.AccessKeyMetadata, error) 
 }
 
 // GetLastAccessKeyUsed returns lastly used date of access key
-func (i IAMClient) GetLastAccessKeyUsed(accessKey *string) (*iam.AccessKeyLastUsed, error) {
+func (i *IAMClient) GetLastAccessKeyUsed(accessKey *string) (*types.AccessKeyLastUsed, error) {
 	input := &iam.GetAccessKeyLastUsedInput{
 		AccessKeyId: accessKey,
 	}
 
-	result, err := i.Client.GetAccessKeyLastUsed(input)
+	result, err := i.Client.GetAccessKeyLastUsed(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -176,12 +173,12 @@ func (i IAMClient) GetLastAccessKeyUsed(accessKey *string) (*iam.AccessKeyLastUs
 }
 
 // GetMFADevices returns all MFA devices
-func (i IAMClient) GetMFADevices(user string) ([]*iam.MFADevice, error) {
+func (i *IAMClient) GetMFADevices(user string) ([]types.MFADevice, error) {
 	input := &iam.ListMFADevicesInput{
 		UserName: aws.String(user),
 	}
 
-	result, err := i.Client.ListMFADevices(input)
+	result, err := i.Client.ListMFADevices(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -190,12 +187,12 @@ func (i IAMClient) GetMFADevices(user string) ([]*iam.MFADevice, error) {
 }
 
 // GetUserListInGroup returns user list of group
-func (i IAMClient) GetUserListInGroup(group string) ([]*iam.User, error) {
+func (i *IAMClient) GetUserListInGroup(group string) ([]types.User, error) {
 	input := &iam.GetGroupInput{
 		GroupName: aws.String(group),
 	}
 
-	result, err := i.Client.GetGroup(input)
+	result, err := i.Client.GetGroup(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -204,12 +201,12 @@ func (i IAMClient) GetUserListInGroup(group string) ([]*iam.User, error) {
 }
 
 // GetGroupPolicies returns policies of group
-func (i IAMClient) GetGroupPolicies(group string) ([]*iam.AttachedPolicy, error) {
+func (i *IAMClient) GetGroupPolicies(group string) ([]types.AttachedPolicy, error) {
 	input := &iam.ListAttachedGroupPoliciesInput{
 		GroupName: aws.String(group),
 	}
 
-	result, err := i.Client.ListAttachedGroupPolicies(input)
+	result, err := i.Client.ListAttachedGroupPolicies(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +215,7 @@ func (i IAMClient) GetGroupPolicies(group string) ([]*iam.AttachedPolicy, error)
 }
 
 // ScanGroup scans all IAM group
-func (i IAMClient) ScanGroup() ([]resource.Resource, map[string][]string, error) {
+func (i *IAMClient) ScanGroup() ([]resource.Resource, map[string][]string, error) {
 	var wg sync.WaitGroup
 	var result []resource.Resource
 
@@ -253,7 +250,7 @@ func (i IAMClient) ScanGroup() ([]resource.Resource, map[string][]string, error)
 
 	var mutex = new(sync.RWMutex)
 
-	f := func(group *iam.Group, userGroupMap map[string][]string, ch chan *resource.IAMGroupResource) {
+	f := func(group types.Group, userGroupMap map[string][]string, ch chan *resource.IAMGroupResource) {
 		logrus.Debugf("group found: %s", *group.GroupName)
 		tmp := resource.IAMGroupResource{
 			ResourceType: aws.String(constants.IAMGroupResourceName),
@@ -327,7 +324,7 @@ func (i IAMClient) ScanGroup() ([]resource.Resource, map[string][]string, error)
 }
 
 // ScanUser scans all IAM group
-func (i IAMClient) ScanUser(userGroupMap map[string][]string) ([]resource.Resource, error) {
+func (i *IAMClient) ScanUser(userGroupMap map[string][]string) ([]resource.Resource, error) {
 	var wg sync.WaitGroup
 	var result []resource.Resource
 
@@ -358,7 +355,7 @@ func (i IAMClient) ScanUser(userGroupMap map[string][]string) ([]resource.Resour
 		output <- ret
 	}(input, output, &wg)
 
-	f := func(user *iam.User, ch chan *resource.IAMUserResource) {
+	f := func(user types.User, ch chan *resource.IAMUserResource) {
 		tmp := resource.IAMUserResource{
 			ResourceType: aws.String(constants.IAMUserResourceName),
 		}
@@ -435,7 +432,7 @@ func (i IAMClient) ScanUser(userGroupMap map[string][]string) ([]resource.Resour
 }
 
 // ScanRole scans all IAM group
-func (i IAMClient) ScanRole() ([]resource.Resource, error) {
+func (i *IAMClient) ScanRole() ([]resource.Resource, error) {
 	var wg sync.WaitGroup
 	var result []resource.Resource
 
@@ -466,7 +463,7 @@ func (i IAMClient) ScanRole() ([]resource.Resource, error) {
 		output <- ret
 	}(input, output, &wg)
 
-	f := func(role *iam.Role, ch chan *resource.IAMRoleResource) {
+	f := func(role types.Role, ch chan *resource.IAMRoleResource) {
 		tmp := resource.IAMRoleResource{
 			ResourceType: aws.String(constants.IAMRoleResourceName),
 		}
@@ -548,4 +545,21 @@ func (i IAMClient) ScanRole() ([]resource.Resource, error) {
 	logrus.Debugf("total valid IAM role data count: %d", len(result))
 
 	return result, nil
+}
+
+// SetAlias sets alias
+func (i *IAMClient) SetAlias(alias *string) {
+	i.Alias = alias
+}
+
+// GetAccountAlias returns account alias
+func GetAccountAlias(cfg aws.Config) (string, error) {
+	svc := GetIAMClientFn(cfg)
+
+	result, err := svc.ListAccountAliases(context.TODO(), &iam.ListAccountAliasesInput{})
+	if err != nil {
+		return constants.EmptyString, err
+	}
+
+	return result.AccountAliases[0], nil
 }

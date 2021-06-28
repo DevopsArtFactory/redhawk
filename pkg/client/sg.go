@@ -17,10 +17,12 @@ limitations under the License.
 package client
 
 import (
+	"context"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/sirupsen/logrus"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
@@ -29,7 +31,8 @@ import (
 
 type SGClient struct {
 	Resource string
-	Client   *ec2.EC2
+	Client   *ec2.Client
+	Alias    *string
 }
 
 // GetResourceName returns resource name of client
@@ -38,16 +41,15 @@ func (s SGClient) GetResourceName() string {
 }
 
 // NewSGClient creates a SGClient
-func NewSGClient(helper Helper) (Client, error) {
-	session := GetAwsSession()
+func NewSGClient(cfg aws.Config, _ Helper) (Client, error) {
 	return &SGClient{
 		Resource: constants.SGResourceName,
-		Client:   GetEC2ClientFn(session, helper.Region, helper.Credentials),
+		Client:   GetEC2ClientFn(cfg),
 	}, nil
 }
 
 // Scan scans all data
-func (s SGClient) Scan() ([]resource.Resource, error) {
+func (s *SGClient) Scan() ([]resource.Resource, error) {
 	var wg sync.WaitGroup
 	var result []resource.Resource
 
@@ -75,7 +77,7 @@ func (s SGClient) Scan() ([]resource.Resource, error) {
 		output <- ret
 	}(input, output, &wg)
 
-	f := func(sg *ec2.SecurityGroup, ch chan resource.SGResource) {
+	f := func(sg types.SecurityGroup, ch chan resource.SGResource) {
 		tmp := resource.SGResource{
 			ResourceType: aws.String(constants.SGResourceName),
 		}
@@ -119,11 +121,16 @@ func (s SGClient) Scan() ([]resource.Resource, error) {
 }
 
 // GetSGList returns all security group list in the account
-func (s SGClient) GetSGList() ([]*ec2.SecurityGroup, error) {
-	result, err := s.Client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
+func (s *SGClient) GetSGList() ([]types.SecurityGroup, error) {
+	result, err := s.Client.DescribeSecurityGroups(context.TODO(), &ec2.DescribeSecurityGroupsInput{})
 	if err != nil {
 		return nil, err
 	}
 
 	return result.SecurityGroups, nil
+}
+
+// SetAlias sets alias
+func (s *SGClient) SetAlias(alias *string) {
+	s.Alias = alias
 }

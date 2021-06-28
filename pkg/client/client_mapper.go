@@ -17,11 +17,13 @@ limitations under the License.
 package client
 
 import (
+	"github.com/aws/aws-sdk-go-v2/aws"
+
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
 )
 
 var (
-	clientMapper = map[string]func(Helper) (Client, error){
+	clientMapper = map[string]func(aws.Config, Helper) (Client, error){
 		constants.EC2ResourceName:     NewEC2Client,
 		constants.SGResourceName:      NewSGClient,
 		constants.Route53ResourceName: NewRoute53Client,

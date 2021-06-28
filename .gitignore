@@ -1,6 +1,7 @@
 .vscode
 .idea
 *.csv
+vendor
 
 out
 build

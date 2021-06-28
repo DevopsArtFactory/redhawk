@@ -265,7 +265,8 @@ func ReadAWSConfig() (*ini.File, error) {
 
 // printHelp shows the basic usage of redhawk
 func printHelp(region string) error {
-	sts, err := client.NewSTSClient(region)
+	cfg := client.GetAwsSession(region)
+	sts, err := client.NewSTSClient(cfg)
 	if err != nil {
 		return err
 	}
