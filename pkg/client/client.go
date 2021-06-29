@@ -19,13 +19,12 @@ package client
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/credentials"
-
 	"github.com/DevopsArtFactory/redhawk/pkg/resource"
 )
 
 type Client interface {
 	GetResourceName() string
+	SetAlias(*string)
 	Scan() ([]resource.Resource, error)
 }
 
@@ -33,22 +32,30 @@ type Helper struct {
 	Provider string
 	Resource string
 	Region   string
-
-	// AWS Helper config
-	Credentials *credentials.Credentials
 }
 
 // ChooseResourceClient selects resource client from the list
 func ChooseResourceClient(resource string, h Helper) (Client, error) {
+	var err error
+	cfg := GetAwsSession(h.Region)
+
+	// Get Account alias
+	alias, err := GetAccountAlias(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	f, ok := clientMapper[resource]
 	if !ok {
 		return nil, fmt.Errorf("client does not support: %s", resource)
 	}
 
-	c, err := f(h)
+	c, err := f(cfg, h)
 	if err != nil {
 		return nil, err
 	}
+
+	c.SetAlias(&alias)
 
 	return c, nil
 }

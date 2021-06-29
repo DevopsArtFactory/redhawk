@@ -17,11 +17,20 @@ limitations under the License.
 package client
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 )
 
 // GetAwsSession creates new session for AWS
-func GetAwsSession() *session.Session {
-	mySession := session.Must(session.NewSession())
-	return mySession
+func GetAwsSession(region string) aws.Config {
+	var optFunc config.LoadOptionsFunc
+	if len(region) > 0 {
+		optFunc = config.WithRegion(region)
+	}
+	cfg, _ := config.LoadDefaultConfig(context.TODO(),
+		optFunc,
+	)
+	return cfg
 }

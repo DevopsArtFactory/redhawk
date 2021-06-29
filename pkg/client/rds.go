@@ -17,13 +17,13 @@ limitations under the License.
 package client
 
 import (
+	"context"
 	"strings"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/sirupsen/logrus"
 
 	"github.com/DevopsArtFactory/redhawk/pkg/constants"
@@ -32,33 +32,30 @@ import (
 
 type RDSClient struct {
 	Resource string
-	Client   *rds.RDS
+	Client   *rds.Client
+	Alias    *string
 }
 
 // GetResourceName returns resource name of client
-func (r RDSClient) GetResourceName() string {
+func (r *RDSClient) GetResourceName() string {
 	return r.Resource
 }
 
 // NewRDSClient creates a RDSClient
-func NewRDSClient(helper Helper) (Client, error) {
-	session := GetAwsSession()
+func NewRDSClient(cfg aws.Config, helper Helper) (Client, error) {
 	return &RDSClient{
 		Resource: constants.RDSResourceName,
-		Client:   GetRDSClientFn(session, helper.Region, helper.Credentials),
+		Client:   GetRDSClientFn(cfg),
 	}, nil
 }
 
 // GetRDSClientFn creates rds client
-func GetRDSClientFn(sess client.ConfigProvider, region string, creds *credentials.Credentials) *rds.RDS {
-	if creds == nil {
-		return rds.New(sess, &aws.Config{Region: aws.String(region)})
-	}
-	return rds.New(sess, &aws.Config{Region: aws.String(region), Credentials: creds})
+func GetRDSClientFn(cfg aws.Config) *rds.Client {
+	return rds.NewFromConfig(cfg)
 }
 
 // Scan scans all data
-func (r RDSClient) Scan() ([]resource.Resource, error) {
+func (r *RDSClient) Scan() ([]resource.Resource, error) {
 	var wg sync.WaitGroup
 	var result []resource.Resource
 
@@ -88,7 +85,7 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 		output <- ret
 	}(input, output, &wg)
 
-	f := func(cluster *rds.DBCluster, ch chan *resource.RDSResource) {
+	f := func(cluster types.DBCluster, ch chan *resource.RDSResource) {
 		for _, dbMember := range cluster.DBClusterMembers {
 			tmp := resource.RDSResource{
 				ResourceType: aws.String(constants.RDSResourceName),
@@ -96,7 +93,7 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 
 			tmp.RDSIdentifier = dbMember.DBInstanceIdentifier
 			role := "reader"
-			if *dbMember.IsClusterWriter {
+			if dbMember.IsClusterWriter {
 				role = "writer"
 			}
 
@@ -158,8 +155,8 @@ func (r RDSClient) Scan() ([]resource.Resource, error) {
 }
 
 // GetRDSClusterList returns all DB clusters list in the account
-func (r RDSClient) GetRDSClusterList() ([]*rds.DBCluster, error) {
-	result, err := r.Client.DescribeDBClusters(&rds.DescribeDBClustersInput{})
+func (r *RDSClient) GetRDSClusterList() ([]types.DBCluster, error) {
+	result, err := r.Client.DescribeDBClusters(context.TODO(), &rds.DescribeDBClustersInput{})
 	if err != nil {
 		return nil, err
 	}
@@ -168,13 +165,18 @@ func (r RDSClient) GetRDSClusterList() ([]*rds.DBCluster, error) {
 }
 
 // GetRDSInfo returns DB instance information
-func (r RDSClient) GetRDSInfo(identifier string) (*rds.DBInstance, error) {
-	result, err := r.Client.DescribeDBInstances(&rds.DescribeDBInstancesInput{
+func (r *RDSClient) GetRDSInfo(identifier string) (*types.DBInstance, error) {
+	result, err := r.Client.DescribeDBInstances(context.TODO(), &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(identifier),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return result.DBInstances[0], nil
+	return &result.DBInstances[0], nil
+}
+
+// SetAlias sets alias
+func (r *RDSClient) SetAlias(alias *string) {
+	r.Alias = alias
 }

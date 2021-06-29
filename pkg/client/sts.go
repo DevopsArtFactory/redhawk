@@ -17,35 +17,31 @@ limitations under the License.
 package client
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/service/sts"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
 type STSClient struct {
-	Client *sts.STS
+	Client *sts.Client
 }
 
 // NewSTSClient creates a STSClients
-func NewSTSClient(region string) (*STSClient, error) {
-	session := GetAwsSession()
+func NewSTSClient(cfg aws.Config) (*STSClient, error) {
 	return &STSClient{
-		Client: GetSTSClientFn(session, region, nil),
+		Client: GetSTSClientFn(cfg),
 	}, nil
 }
 
 // GetSTSClientFn creates a new STS Client
-func GetSTSClientFn(sess client.ConfigProvider, region string, creds *credentials.Credentials) *sts.STS {
-	if creds == nil {
-		return sts.New(sess, &aws.Config{Region: aws.String(region)})
-	}
-	return sts.New(sess, &aws.Config{Region: aws.String(region), Credentials: creds})
+func GetSTSClientFn(cfg aws.Config) *sts.Client {
+	return sts.NewFromConfig(cfg)
 }
 
 // CheckWhoIam calls get-caller-identity and print the result
 func (s STSClient) CheckWhoIam() (*string, error) {
-	result, err := s.Client.GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	result, err := s.Client.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
 	if err != nil {
 		return nil, err
 	}

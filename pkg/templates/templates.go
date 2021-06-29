@@ -29,15 +29,15 @@ const AWSTemplate = `PROVIDER: {{ .Provider }}
     {{- if gt (len $val) 0 }}
 	  {{- if $.Detail }}
 ==============================================
-SERVICE	NAME	ID	STATUS	TYPE	AZ	PUBLIC IP	IPv6	PRIVATE IP	SG NAME	SG ID	KEY	OWNER	IMAGE	LAUNCHED
+SERVICE	STATUS	NAME	ID	TYPE	AZ	Region	SG_NAME	SG_ID	SUBNET_ID	PUBLIC_IP	PRIVATE_IP	IMAGE	VPC_ID	KEY	LAUNCHED
 	    {{- range $ec2 := $val }}
-EC2	{{ format $ec2.Name }}	{{ format $ec2.InstanceID }}	{{ format $ec2.InstanceStatus }}	{{ format $ec2.InstanceType }}	{{ format $ec2.AvailabilityZone }}	{{ format $ec2.PublicIP }}	{{ format $ec2.IPv6s }}	{{ format $ec2.PrivateIPs }}	{{ format $ec2.SecurityGroupNames }}	{{ format $ec2.SecurityGroupIDs }}	{{ format $ec2.KeyName }}	{{ format $ec2.OwnerID }}	{{ format $ec2.ImageID }}	{{ format $ec2.LaunchTime }}
+EC2	{{ format $ec2.InstanceStatus }}	{{ format $ec2.Name }}	{{ format $ec2.InstanceID }}	{{ format $ec2.InstanceType }}	{{ format $ec2.AvailabilityZone }}	{{ format $ec2.RegionName }}	{{ format $ec2.SecurityGroupNames }}	{{ format $ec2.SecurityGroupIDs }}	{{ format $ec2.SubnetID }}	{{ format $ec2.PublicIP }}	{{ format $ec2.PrivateIPs }}	{{ format $ec2.ImageID }}	{{ format $ec2.VpcID }}	{{ format $ec2.KeyName }}	{{ format $ec2.LaunchTime }}
 	    {{- end }}
 	  {{- else }}
 ==============================================
-SERVICE	NAME	ID	STATUS	TYPE	AZ	LAUNCHED
+SERVICE	STATUS	NAME	ID	TYPE	AZ	LAUNCHED
 	    {{- range $ec2 := $val }}
-EC2	{{ format $ec2.Name }}	{{ format $ec2.InstanceID }}	{{ format $ec2.InstanceStatus }}	{{ format $ec2.InstanceType }}	{{ format $ec2.AvailabilityZone }}	{{ format $ec2.LaunchTime }}
+EC2	{{ format $ec2.InstanceStatus }}	{{ format $ec2.Name }}	{{ format $ec2.InstanceID }}	{{ format $ec2.InstanceType }}	{{ format $ec2.AvailabilityZone }}	{{ format $ec2.LaunchTime }}
 	    {{- end }}
 	  {{- end }}
     {{- end }}

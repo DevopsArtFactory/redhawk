@@ -36,22 +36,26 @@ type Resources struct {
 // EC2 Resource columns
 type EC2Resource struct {
 	ResourceType       *string    `json:"resource_type,omitempty"`
+	InstanceStatus     *string    `json:"instance_status,omitempty"`
+	AccountAlias       *string    `json:"account_alias,omitempty"`
 	Name               *string    `json:"name,omitempty"`
 	InstanceID         *string    `json:"instance_id,omitempty"`
-	InstanceStatus     *string    `json:"instance_status,omitempty"`
 	InstanceType       *string    `json:"instance_type,omitempty"`
 	AvailabilityZone   *string    `json:"availability_zone,omitempty"`
-	ImageID            *string    `json:"image_id,omitempty"`
-	PublicIP           *string    `json:"public_ip,omitempty"`
-	KeyName            *string    `json:"key_name,omitempty"`
-	IAMInstanceProfile *string    `json:"iam_instance_profile,omitempty"`
-	VpcID              *string    `json:"vpc_id,omitempty"`
-	OwnerID            *string    `json:"owner_id,omitempty"`
-	IPv6s              *string    `json:"ipv6,omitempty"`
-	PrivateIPs         *string    `json:"private_ips,omitempty"`
+	RegionName         *string    `json:"region_name,omitempty"`
 	SecurityGroupNames *string    `json:"security_group_names,omitempty"`
 	SecurityGroupIDs   *string    `json:"security_group_ids,omitempty"`
+	SubnetID           *string    `json:"subnet_id,omitempty"`
+	PublicIP           *string    `json:"public_ip,omitempty"`
+	PrivateIPs         *string    `json:"private_ips,omitempty"`
+	ImageID            *string    `json:"image_id,omitempty"`
+	VpcID              *string    `json:"vpc_id,omitempty"`
+	KeyName            *string    `json:"key_name,omitempty"`
 	LaunchTime         *time.Time `json:"launch_time,omitempty"`
+
+	//OwnerID            *string    `json:"owner_id,omitempty"`
+	//IPv6s              *string    `json:"ipv6,omitempty"`
+	//IAMInstanceProfile *string    `json:"iam_instance_profile,omitempty"`
 }
 
 // Security Group Resource columns
